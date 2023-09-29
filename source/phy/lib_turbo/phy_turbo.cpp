@@ -73,7 +73,7 @@ struct bblib_lte_turbo_init
         //check to see if string has necessary characters
 #ifdef WIN32
         pCheckPath1 = strstr(pTablePath, "sdk");
-        
+
         if ((pCheckPath1 == NULL) && (pCheckPath2 == NULL))
         {
             printf("%s is not valid!!!  DIR_WIRELESS_SDK must include\n", pTablePath);
@@ -82,13 +82,13 @@ struct bblib_lte_turbo_init
         }
 #else
         pCheckPath1 = strstr(pTablePath, "sdk/build-avx");
-        pCheckPath2 = strstr(pTablePath, "sdk//build-avx");
-        pCheckPath3 = strstr(pTablePath, "sdk/build-snc");
+        pCheckPath2 = strstr(pTablePath, "sdk/build-snc");
+        pCheckPath3 = strstr(pTablePath, "sdk/build-spr");
 
         if ((pCheckPath1 == NULL) && (pCheckPath2 == NULL) && (pCheckPath3 == NULL))
         {
             printf("%s is not valid!!!  DIR_WIRELESS_SDK must include\n", pTablePath);
-            printf("sdk/build-avx or sdk//build-avx or sdk/build-snc somewhere in path\n");
+            printf("sdk/build-avx or sdk/build-snc or sdk/build-spr somewhere in path\n");
             exit(-1);
         }
 #endif
@@ -106,7 +106,7 @@ struct bblib_lte_turbo_init
             printf("cannot have ../ in path!\n");
             exit(-1);
         }
-    
+
         //check to see if string has NULL characters in the middle of the
         //string trying to widen access to other files in current directory
         //NULL character should only be at the end of the string
@@ -146,7 +146,7 @@ int16_t bblib_lte_turbo_version(char *version, int buffer_size) {
     /* The version string will be updated before the build process starts by the
      *       jobs building the library and/or preparing the release packages.
      *       Do not edit the version string manually */
-    const char *msg = "FlexRAN SDK bblib_lte_turbo version FEC_SDK_21.11";
+    const char *msg = "FlexRAN SDK bblib_lte_turbo version FEC_SDK_23.07";
 
     return(bblib_sdk_version(&version, &msg, buffer_size));
 }
@@ -173,6 +173,10 @@ int32_t bblib_turbo_encoder(const struct bblib_turbo_encoder_request *request,
 
 int32_t bblib_turbo_decoder(const struct bblib_turbo_decoder_request *request,
     struct bblib_turbo_decoder_response *response) {
+
+    /* Set CRC bit to Fail */
+    response->crc_status = 0;
+
 #ifdef _BBLIB_AVX512_
     if ((request->k) % 16 != 0) {
         return bblib_lte_turbo_decoder_8windows_sse(request, response);

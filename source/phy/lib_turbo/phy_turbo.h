@@ -74,8 +74,9 @@ struct bblib_turbo_decoder_response {
                           The expected buffer length is 6528*16 bytes. */
 
     uint16_t *cb_buf; /*!< Code block bits buffer used for internal calculations.
-
                            The expected buffer length is K/8. */
+
+    uint8_t crc_status; /*!< CRC pass or fail. 0: Fail, 1: Pass */
 };
 
 

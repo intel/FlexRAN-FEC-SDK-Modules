@@ -101,12 +101,20 @@ bblib_lte_turbo_encoder_avx512(const struct bblib_turbo_encoder_request *request
 
     uint8_t State0, State1, Tail0, Tail1, Tmp1, Tmp2;
     uint16_t TmpShort1, TmpShort2;
+    uint32_t requestLength = request->length;
+    // Add this line to fix klocwork SPECTRE.VARIANT1 warning
+    if (requestLength >= (MAX_DATA_LEN_INTERLEAVE*4))
+    {
+        printf("Request length for turbo encoder out of range!\n");
+        return -1;
+    }
 
     b0 = _mm_setzero_si128();
     b1 = _mm_setzero_si128();
     yr0 = _mm_setzero_si128();
     yr1 = _mm_setzero_si128();
-    len512 = request->length & 0xFFFFFFC0;
+
+    len512 = requestLength & 0xFFFFFFC0;
     if (unlikely_local(len512 > 0))
     {
         for (idx = 0; idx < len512; idx+= 64)
@@ -276,7 +284,7 @@ bblib_lte_turbo_encoder_avx512(const struct bblib_turbo_encoder_request *request
             yr1 = _mm_slli_epi64(yr1, 5);
         }
     }
-    lens = request->length - len512;
+    lens = requestLength - len512;
     if (unlikely_local(lens == 0))
     {
         /* tail processing */
@@ -303,9 +311,9 @@ bblib_lte_turbo_encoder_avx512(const struct bblib_turbo_encoder_request *request
         bt1 = bt1 | ((b81 & 0x20) >> 1);
         bt2 = bt2 | ((yr81 & 0x20) >> 1);
 
-        *(response->output_win_0 + request->length) = bt0;
-        *(response->output_win_1 + request->length) = bt1;
-        *(response->output_win_2 + request->length) = bt2;
+        *(response->output_win_0 + requestLength) = bt0;
+        *(response->output_win_1 + requestLength) = bt1;
+        *(response->output_win_2 + requestLength) = bt2;
         return 0;
     }
     else
@@ -360,7 +368,7 @@ bblib_lte_turbo_encoder_avx512(const struct bblib_turbo_encoder_request *request
             yr1 = _mm_slli_epi64(yr1, 5);
 
             len512 += 16;
-            lens = request->length - len512;
+            lens = requestLength - len512;
 
             if (lens == 0)
             {
@@ -388,9 +396,9 @@ bblib_lte_turbo_encoder_avx512(const struct bblib_turbo_encoder_request *request
                 bt1 = bt1 | ((b81 & 0x20) >> 1);
                 bt2 = bt2 | ((yr81 & 0x20) >> 1);
 
-                *(response->output_win_0 + request->length) = bt0;
-                *(response->output_win_1 + request->length) = bt1;
-                *(response->output_win_2 + request->length) = bt2;
+                *(response->output_win_0 + requestLength) = bt0;
+                *(response->output_win_1 + requestLength) = bt1;
+                *(response->output_win_2 + requestLength) = bt2;
 
                 return 0;
             }
@@ -398,7 +406,7 @@ bblib_lte_turbo_encoder_avx512(const struct bblib_turbo_encoder_request *request
         State0 = _mm_extract_epi8(a0, 0) & 0x7;
         State1 = _mm_extract_epi8(a1, 0) & 0x7;
 
-        for(idx = len512; idx < request->length; idx++)
+        for(idx = len512; idx < requestLength; idx++)
         {
             Tmp1 = *(request->input_win + idx);
             Tmp2 = *(input_win_2 + idx);
@@ -418,13 +426,13 @@ bblib_lte_turbo_encoder_avx512(const struct bblib_turbo_encoder_request *request
         Tail1 = g_TailWinTable_sdk[State1];
         Tail1 = Tail1>>2;
 
-        *(response->output_win_0 + request->length) = (Tail0 & (128+64)) + (Tail1 & (32+16));
+        *(response->output_win_0 + requestLength) = (Tail0 & (128+64)) + (Tail1 & (32+16));
         Tail0 = Tail0 << 2;
         Tail1 = Tail1 << 2;
-        *(response->output_win_1 + request->length) = (Tail0 & (128+64)) + (Tail1 & (32+16));
+        *(response->output_win_1 + requestLength) = (Tail0 & (128+64)) + (Tail1 & (32+16));
         Tail0 = Tail0 << 2;
         Tail1 = Tail1 << 2;
-        *(response->output_win_2 + request->length) = (Tail0 & (128+64)) + (Tail1 & (32+16));
+        *(response->output_win_2 + requestLength) = (Tail0 & (128+64)) + (Tail1 & (32+16));
 
     }
 

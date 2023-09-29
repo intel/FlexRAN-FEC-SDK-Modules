@@ -36,7 +36,7 @@ TEST(SDKVersionCheck, PopulateString)
 {
     char* output = new char[BBLIB_SDK_VERSION_STRING_MAX_LEN];
 
-    const char* input = "FlexRAN SDK bblib_X version FEC_SDK_21.11";
+    const char* input = "FlexRAN SDK bblib_X version FEC_SDK_23.07";
 
     bblib_sdk_version(&output, &input, BBLIB_SDK_VERSION_STRING_MAX_LEN);
 
@@ -56,7 +56,7 @@ TEST(SDKVersionCheck, BufferTooSmall)
 {
     char* output = new char[1];
 
-    const char* input = "FlexRAN SDK bblib_X version FEC_SDK_21.11";
+    const char* input = "FlexRAN SDK bblib_X version FEC_SDK_23.07";
 
     int ret = bblib_sdk_version(&output, &input, 1);
 

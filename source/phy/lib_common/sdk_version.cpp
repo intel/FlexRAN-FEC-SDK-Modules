@@ -68,7 +68,7 @@ bblib_common_version(char *version, int buffer_size)
     /* The version string will be updated before the build process starts by the
      *       jobs building the library and/or preparing the release packages.
      *       Do not edit the version string manually */
-    const char *msg = "FlexRAN SDK bblib_common version FEC_SDK_21.11";
+    const char *msg = "FlexRAN SDK bblib_common version FEC_SDK_23.07";
 
     return(bblib_sdk_version(&version, &msg, buffer_size));
 }

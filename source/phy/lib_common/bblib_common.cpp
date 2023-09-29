@@ -34,10 +34,12 @@
 #include <vector>
 #include <stdexcept>
 #include <cstdlib>
+#include <iostream>
 
 #ifndef _WIN64
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <stdint.h>
 #else
 #include <Windows.h>
 #endif
@@ -51,14 +53,17 @@ struct reading_input_file_exception : public std::exception
     }
 };
 
-int bblib_common_read_binary_data(const std::string filename, char  * output_buffer) {
+int bblib_common_read_binary_data(const std::string filename, char  * output_buffer, uint32_t buf_size) {
 
 
     //std::string sdk_dir = getenv("DIR_WIRELESS_SDK");
 
     char *sdk_dir = getenv("DIR_WIRELESS_SDK");
+#ifdef _WIN32
+    char *cFileName = (char *)(&filename);
+#endif
     if(sdk_dir == NULL) {
-        printf("Failed to get environment variable DIR_WIRELESS_SDK!");
+        std::cout<<"Failed to get environment variable DIR_WIRELESS_SDK!"<<std::endl;
         return -1;
     }
 
@@ -70,8 +75,12 @@ int bblib_common_read_binary_data(const std::string filename, char  * output_buf
     if(buffer.size() == 0)
         throw reading_input_file_exception();
 
-    if(buffer.size() < sizeof(output_buffer)) {
-        printf("Input file error");
+    if(buffer.size() != buf_size) {
+#ifndef _WIN32
+        std::cout<<"Input file ("<<filename<<") size error, expected: "<<buf_size<<" actual: "<<buffer.size()<<std::endl;
+#else
+        std::cout << "Input file (" << cFileName << ") size error, expected: " << buf_size << " actual: " << buffer.size() << std::endl;
+#endif
         return -1;
     }
 

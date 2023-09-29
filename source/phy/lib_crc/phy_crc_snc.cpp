@@ -43,6 +43,7 @@
 #include <stdint.h>
 #include <functional>
 
+#include "gcc_inc.h"
 #include "phy_crc.h"
 #include "phy_crc_internal.h"
 

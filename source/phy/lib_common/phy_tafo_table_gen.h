@@ -37,6 +37,10 @@ extern "C" {
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifndef FO_LUT_SIZE
+#define FO_LUT_SIZE (4096)
+#endif
+
 /*!
     \struct bblib_ta_request.
     \brief Request structure for ta table
@@ -86,6 +90,12 @@ struct bblib_fo_response
 */
 void bblib_init_common_time_offset_tables(const struct bblib_ta_request *request, struct bblib_ta_response *response);
 void bblib_init_common_frequency_compensation_tables(const struct bblib_fo_request *request, struct bblib_fo_response *response);
+//! @}
+
+//! @{
+/*! \brief system parameters generate procedures.
+*/
+int16_t get_sys_para(const int16_t nMu, const int16_t nFftSize, int16_t *nMaxCp, int16_t *nMinCp, float *fSampleRate);
 //! @}
 
 #ifdef __cplusplus

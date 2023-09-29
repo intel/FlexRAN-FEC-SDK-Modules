@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <dvec.h>
+#include "dvec_inc.h"
 #include <cstdint>
 #include <iostream>
 
@@ -55,7 +55,7 @@
 #ifdef USE_PRIVATE_DVEC
 
 // Dvec in ISS 2019 doesn't provide a Is16vec16 class. This was reported to the compiler team as issue
-// CMPLRIL0-30948 in JIRA 
+// CMPLRIL0-30948 in JIRA
 
 class Is16vec16
 {
@@ -97,8 +97,10 @@ inline Is16vec16 select_lt(Is16vec16 a, Is16vec16 b, Is16vec16 c, Is16vec16 d)
 
 
 // Some functions are missing from dvec for AVX-512.
+#ifdef _BBLIB_AVX512_
 inline Is16vec32 abs(Is16vec32 v) { return _mm512_abs_epi16(v); }
 inline Is16vec32 sat_sub_unsigned(Is16vec32 lhs, Is16vec32 rhs) { return _mm512_subs_epu16(lhs, rhs); }
+#endif
 
 #else
 
@@ -114,11 +116,13 @@ inline Is16vec16 select_lt(Is16vec16 a, Is16vec16 b, Is16vec16 c, Is16vec16 d)
 }
 
 // Some functions are missing from dvec for AVX-512.
+#ifdef _BBLIB_AVX512_
 inline Is16vec32 abs(Is16vec32 v) { return _mm512_abs_epi16(v); }
 inline Is16vec32 sat_sub_unsigned(Is16vec32 lhs, Is16vec32 rhs) { return _mm512_subs_epu16(lhs, rhs); }
-
+#endif
 inline Is16vec16 abs(Is16vec16 v) { return _mm256_abs_epi16(v); }
 inline Is16vec16 sat_sub_unsigned(Is16vec16 lhs, Is16vec16 rhs) { return _mm256_subs_epu16(lhs, rhs); }
+
 
 #endif
 
@@ -185,7 +189,10 @@ static int GetNumAlignedSimdLoops(int zExpansion)
 /// dvec doesn't provide its own scalar broadcast.
 template<typename T> T BroadcastInt16(int16_t);
 template<> Is16vec16 inline BroadcastInt16(int16_t v) { return _mm256_set1_epi16(v); }
+
+#ifdef _BBLIB_AVX512_
 template<> Is16vec32 inline BroadcastInt16(int16_t v) { return _mm512_set1_epi16(v); }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // AVX2 / AVX512 Overloaded functions
@@ -206,6 +213,7 @@ static int16_t GetNegativeMask(Is16vec16 simd)
 }
 
 /// Get a mask of the negative elements. One bit for each element.
+#ifdef _BBLIB_AVX512_
 static int32_t GetNegativeMask(Is16vec32 simd)
 {
   // Read the MSB by comparing to zero. This is a 3/0.5 instruction. The alternative is to use
@@ -214,6 +222,7 @@ static int32_t GetNegativeMask(Is16vec32 simd)
   // below gives better performance (3% at time of writing).
   return _mm512_cmp_epi16_mask(simd, _mm512_setzero_si512(), _MM_CMPINT_LT);
 }
+#endif
 
 /// Apply a parity correction. All values whose corresponding bits are zero will be negated.
 static Is16vec16 ApplyParityCorrection(int16_t parity, Is16vec16 value)
@@ -225,10 +234,12 @@ static Is16vec16 ApplyParityCorrection(int16_t parity, Is16vec16 value)
   return _mm256_sign_epi16(value, parityTieBreak);
 }
 
+#ifdef _BBLIB_AVX512_
 static Is16vec32 ApplyParityCorrection(int32_t parity, Is16vec32 value)
 {
   return _mm512_mask_sub_epi16(value, parity, _mm512_setzero_si512(), value);
 }
+#endif
 
 /// Perform an insertion of a new value into the best two values found so far, which are sorted in order.
 static void InsertSort(Is16vec16& min1, Is16vec16& min2, Is16vec16& minPos, int newPos, Is16vec16 value)
@@ -242,6 +253,7 @@ static void InsertSort(Is16vec16& min1, Is16vec16& min2, Is16vec16& minPos, int 
   min1 = _mm256_min_epi16(min1, value);
 }
 
+#ifdef _BBLIB_AVX512_
 static void InsertSort(Is16vec32& min1, Is16vec32& min2, Is16vec32& minPos, int newPos, Is16vec32 value)
 {
   // Is the original min unchanged?
@@ -262,7 +274,7 @@ static void InsertSort(Is16vec32& min1, Is16vec32& min2, Is16vec32& minPos, int 
   // any port to give higher throughput.
   min1 = _mm512_mask_blend_epi16(isOriginalStillTheMin, value, min1);
 }
-
+#endif
 
 // The compiler's own implementation of this function is wrong (issue CMPLRLIBS-2780). Provide a
 // corrected replacement until it has been fixed.
@@ -271,11 +283,12 @@ static Is16vec16 SelectEqWorkaround(Is16vec16 a, Is16vec16 b, Is16vec16 c, Is16v
   return _mm256_blendv_epi8(d, c, _mm256_cmpeq_epi16(a, b));
 }
 
+#ifdef _BBLIB_AVX512_
 static Is16vec32 SelectEqWorkaround(Is16vec32 a, Is16vec32 b, Is16vec32 c, Is16vec32 d)
 {
   const auto mask = _mm512_cmp_epi16_mask(a, b, _MM_CMPINT_EQ);
   return _mm512_mask_blend_epi16(mask, d, c);
 }
-
+#endif
 
 

@@ -48,12 +48,16 @@
 /* turbo encoder and decoder function */
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 
 #include "immintrin.h"
 
 #include "phy_crc.h"
 #include "phy_turbo.h"
 #include "phy_turbo_internal.h"
+#include "gcc_inc.h"
+#include "bblib_common.hpp"
+
 #if defined (_BBLIB_AVX512_)
 static __m512i TD_constant512 = _mm512_setzero_si512();
 
@@ -177,7 +181,6 @@ inline void init_beta_comp(int8_t *a, int8_t *c, __m512i* initbeta, int8_t *tail
 int32_t bblib_lte_turbo_decoder_64windows_avx512(const struct bblib_turbo_decoder_request *request,
                                                  struct bblib_turbo_decoder_response *response)
 {
-    int32_t retVal = -1;
     if (request == NULL || response == NULL)
     {
         printf("bblib_lte_turbo_decoder_64windows_avx512 input address invalid \n");
@@ -291,10 +294,11 @@ int32_t bblib_lte_turbo_decoder_64windows_avx512(const struct bblib_turbo_decode
             }
             if (crc_response.check_passed)
             {
-                if (request->early_term_disable)
-                    retVal = NumIter;
-                else
+                if (request->early_term_disable == 0)
+                {
+                    response->crc_status = 1;
                     return NumIter;
+                }
             }
 
         }
@@ -386,10 +390,11 @@ int32_t bblib_lte_turbo_decoder_64windows_avx512(const struct bblib_turbo_decode
             }
             if (crc_response.check_passed)
             {
-                if (request->early_term_disable)
-                    retVal = NumIter;
-                else
+                if (request->early_term_disable == 0)
+                {
+                    response->crc_status = 1;
                     return NumIter;
+                }
             }
         }
     }
@@ -412,9 +417,10 @@ int32_t bblib_lte_turbo_decoder_64windows_avx512(const struct bblib_turbo_decode
     }
     if (crc_response.check_passed)
     {
-        return NumIter;
+        response->crc_status = 1;
     }
-    return retVal;
+
+    return NumIter;
 }
 
 /* return val is 0.75*a */
@@ -437,15 +443,15 @@ int32_t SISO_64windows(int8_t *OutputAddress, int8_t *InputAddress,
           int8_t *Tempalpha_sigma, __m512i *initalpha, __m512i* initbeta, int8_t *tailbeta, int32_t WindowSize,
           uint16_t *pCodeBlockBits)
 {
-    __declspec (align(64)) __m512i alpha0, alpha1, alpha2, alpha3, alpha4, alpha5, alpha6, alpha7;
-    __declspec (align(64)) __m512i beta0, beta1, beta2, beta3, beta4, beta5, beta6, beta7;
-    __declspec (align(64)) __m512i initalpha1,initalpha2,initalpha3,initalpha4,initalpha5,initalpha6,initalpha7;
-    __declspec (align(64)) __m512i initbeta1,initbeta2,initbeta3,initbeta4,initbeta5,initbeta6,initbeta7;
-    __declspec (align(64)) __m512i tmpalpha0[8], tmpalpha1[8], tmpbeta0[8], tmpbeta1[8];
+    __align(64) __m512i alpha0, alpha1, alpha2, alpha3, alpha4, alpha5, alpha6, alpha7;
+    __align(64) __m512i beta0, beta1, beta2, beta3, beta4, beta5, beta6, beta7;
+    __align(64) __m512i initalpha1,initalpha2,initalpha3,initalpha4,initalpha5,initalpha6,initalpha7;
+    __align(64) __m512i initbeta1,initbeta2,initbeta3,initbeta4,initbeta5,initbeta6,initbeta7;
+    __align(64) __m512i tmpalpha0[8], tmpalpha1[8], tmpbeta0[8], tmpbeta1[8];
 
-    __declspec (align(64)) __m512i tmpDelta01, tmpDelta10,tmpDelta20, tmpDelta30, tmpDelta40, tmpDelta50, tmpDelta60, tmpDelta70;
-    __declspec (align(64)) __m512i tmpDelta11,tmpDelta21, tmpDelta31, tmpDelta41, tmpDelta51, tmpDelta61, tmpDelta71;
-    __declspec (align(64))__m512i xs, xe, xp, xa;
+    __align(64) __m512i tmpDelta01, tmpDelta10,tmpDelta20, tmpDelta30, tmpDelta40, tmpDelta50, tmpDelta60, tmpDelta70;
+    __align(64) __m512i tmpDelta11,tmpDelta21, tmpDelta31, tmpDelta41, tmpDelta51, tmpDelta61, tmpDelta71;
+    __align(64) __m512i xs, xe, xp, xa;
     __m512i delta0, delta1, delta;
 
     __m512i min_distance = _mm512_set1_epi8(127);
@@ -477,6 +483,9 @@ int32_t SISO_64windows(int8_t *OutputAddress, int8_t *InputAddress,
     xe = _mm512_setzero_si512();
     xs = _mm512_setzero_si512();
     xp = _mm512_setzero_si512();
+
+    KLOCWORK_SPECTRE_VARIANT1_ISSUE_AVOID_SIGNED(WindowSize);
+    
     for (i = 0; i < WindowSize; i++)
     {
         //xe = _mm512_load_si512(input_addr++); /* load extrinsic information */
@@ -844,7 +853,7 @@ void BitTranspose_16windows_new(int32_t K, uint16_t * pin, uint8_t * pout)
     int32_t vLen = (Lwin%8==0)? (Lwin>>3):(Lwin>>3)+1;
     __m256i v1, v2;
     int32_t tmp[8];
-    __declspec (align(64)) uint8_t mat_out[16][48];
+    __align(64) uint8_t mat_out[16][48];
 
     for (i=0; i<vLen; i=i+2)
     {

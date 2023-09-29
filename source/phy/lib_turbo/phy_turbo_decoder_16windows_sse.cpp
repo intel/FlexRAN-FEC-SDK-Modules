@@ -71,7 +71,6 @@ int32_t
 bblib_lte_turbo_decoder_16windows_sse(const struct bblib_turbo_decoder_request *request,
     struct bblib_turbo_decoder_response *response)
 {
-    int32_t retVal = -1;
     int32_t NumIter = 0;
     int32_t C = request->c;
     int32_t K = request->k;
@@ -208,10 +207,10 @@ bblib_lte_turbo_decoder_16windows_sse(const struct bblib_turbo_decoder_request *
         struct bblib_crc_request crc_request;
         crc_request.data = pout;
         crc_request.len = ((K >> 3) - 3)*8;
-        
+
         struct bblib_crc_response crc_response;
         crc_response.data = crc_request.data;
-        
+
 
         /* CRC here */
         if (C>1)
@@ -224,10 +223,11 @@ bblib_lte_turbo_decoder_16windows_sse(const struct bblib_turbo_decoder_request *
         }
         if (crc_response.check_passed)
         {
-            if (request->early_term_disable)
-                retVal = NumIter;
-            else
+            if (request->early_term_disable == 0)
+            {
+                response->crc_status = 1;
                 return NumIter;
+            }
         }
 
     }
@@ -269,10 +269,10 @@ bblib_lte_turbo_decoder_16windows_sse(const struct bblib_turbo_decoder_request *
             struct bblib_crc_request crc_request;
             crc_request.data = pout;
             crc_request.len = ((K >> 3) - 3)*8;
-            
+
             struct bblib_crc_response crc_response;
             crc_response.data = crc_request.data;
-            
+
 
             /* CRC here */
             if (C>1)
@@ -285,10 +285,11 @@ bblib_lte_turbo_decoder_16windows_sse(const struct bblib_turbo_decoder_request *
             }
             if (crc_response.check_passed)
             {
-                if (request->early_term_disable)
-                    retVal = NumIter;
-                else
+                if (request->early_term_disable == 0)
+                {
+                    response->crc_status = 1;
                     return NumIter;
+                }
             }
         }
     }
@@ -298,10 +299,10 @@ bblib_lte_turbo_decoder_16windows_sse(const struct bblib_turbo_decoder_request *
     struct bblib_crc_request crc_request;
     crc_request.data = pout;
     crc_request.len = (K/8 - 3)*8;
-    
+
     struct bblib_crc_response crc_response;
     crc_response.data = crc_request.data;
-    
+
 
     if (C>1)
     {
@@ -314,10 +315,10 @@ bblib_lte_turbo_decoder_16windows_sse(const struct bblib_turbo_decoder_request *
 
     if (crc_response.check_passed)
     {
-        return NumIter;
+        response->crc_status = 1;
     }
 
-    return retVal;
+    return NumIter;
 }
 
 int32_t
@@ -445,7 +446,7 @@ bblib_lte_turbo_decoder_16windows_3iteration_sse(const struct bblib_turbo_decode
     pLeXP1 = request->input + 48;
 
     /* SISO */
-    SISO1_16windows(pLeXP2, pLeXP1, pInterleaverInterRowAddr, pIntraRowPattern, 
+    SISO1_16windows(pLeXP2, pLeXP1, pInterleaverInterRowAddr, pIntraRowPattern,
         pInterleaverIntraRowPatSel, pAG, initalpha, initbeta, tailbeta, Lwin, p_winCodeBlockBits);
     NumIter++;
 
@@ -466,12 +467,12 @@ bblib_lte_turbo_decoder_16windows_3iteration_sse(const struct bblib_turbo_decode
 
     for (j=0; j<3; j++)
     {
-        SISO2_16windows(pLeXP1, pLeXP2, pDeInterleaverInterRowAddr, pIntraRowPattern, 
+        SISO2_16windows(pLeXP1, pLeXP2, pDeInterleaverInterRowAddr, pIntraRowPattern,
             pDeInterleaverIntraRowPatSel, pAG, initalpha_2, initbeta_2, tailbeta_2, Lwin, p_winCodeBlockBits);
         NumIter++;
 
 
-        SISO1_16windows(pLeXP2, pLeXP1, pInterleaverInterRowAddr, pIntraRowPattern, 
+        SISO1_16windows(pLeXP2, pLeXP1, pInterleaverInterRowAddr, pIntraRowPattern,
             pInterleaverIntraRowPatSel, pAG, initalpha, initbeta, tailbeta, Lwin, p_winCodeBlockBits);
         NumIter++;
 
@@ -482,10 +483,10 @@ bblib_lte_turbo_decoder_16windows_3iteration_sse(const struct bblib_turbo_decode
     struct bblib_crc_request crc_request;
     crc_request.data = pout;
     crc_request.len = ((K >> 3) - 3)*8;
-    
+
     struct bblib_crc_response crc_response;
     crc_response.data = crc_request.data;
-    
+
 
     if (C>1)
     {
@@ -497,10 +498,11 @@ bblib_lte_turbo_decoder_16windows_3iteration_sse(const struct bblib_turbo_decode
     }
     if (crc_response.check_passed)
     {
+        response->crc_status = 1;
         return NumIter;
     }
 
-    return -1;
+    return NumIter;
 }
 
 
@@ -1302,7 +1304,7 @@ void BitTranspose_16windows(int32_t K, uint16_t * pin, uint8_t * pout)
 
     __m128i v1, v2;
     int32_t tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
-    __declspec (align(64)) uint8_t mat_out[16][48];
+    __align(64) uint8_t mat_out[16][48];
 
     for (i=0; i<vLen; i++)
     {

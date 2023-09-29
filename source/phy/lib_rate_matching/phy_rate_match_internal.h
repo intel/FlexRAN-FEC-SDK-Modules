@@ -60,7 +60,7 @@ extern int32_t g_nIndex_NULL[188][84];
 extern int32_t g_ratetable[188][18444];
 
 /* Rate matching bit to byte table */
-__declspec (align(64)) extern uint8_t g_BitToByteTABLE[8192];
+__align(64) extern uint8_t g_BitToByteTABLE[8192];
 
 /**
  * @brief Initialize LTE rate matching with SSE instructions, read some files into global tables.

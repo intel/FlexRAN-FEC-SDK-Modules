@@ -317,8 +317,6 @@ __m128i fold_4stage(__m128i* data_in, uint32_t len)
         {
             nextData_stage1 = shift_right_256(previous_data, nextData_stage1, k_shift_size);
         }
-        previous_data = nextData_stage1;
-
         auto previous_data_reserved = nextData_stage1;
 
         // For none byte aligned data, need to preserve bits that are shifted off the end of

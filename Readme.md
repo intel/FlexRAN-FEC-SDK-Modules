@@ -19,13 +19,13 @@ The API and implementation are subject to change without notice.
 
 The software dependencies include:
 
-Intel® C compiler (ICC) or Intel® One API Compiler (ICX)
+Intel® One API Compiler (ICX)
 CMake minimum version 2.8.12
 Intel® Integrated Performance Primitives (IPP) 18.0
 Intel® Math Kernel Library (Intel® MKL) 18.0
 gtest Google Test 1.7.0 (required to run the verification and compute performance tests)
 
-There are community versions of the Intel® ICC and Intel® ICX compilers please refer to:
+The information on how to get the community version of the Intel® ICX compiler is available at:
 https://docs.o-ran-sc.org/projects/o-ran-sc-o-du-phy/en/latest/build_prerequisite.html#download-and-install-oneapi
 for the instructions on how to download the compilers.
 

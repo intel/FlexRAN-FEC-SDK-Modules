@@ -28,8 +28,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <ipp.h>
-#include <ipps.h>
 #include <immintrin.h>  /* AVX512 */
 #include "phy_ldpc_decoder_5gnr.h"
 #include "phy_ldpc_decoder_5gnr_internal.h"

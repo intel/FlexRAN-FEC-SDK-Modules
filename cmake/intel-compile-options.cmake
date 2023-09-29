@@ -112,7 +112,7 @@ else()
   #add_compile_options("-Wremarks ")
   #add_compile_options("-Werror")
 
-  add_compile_options("-std=c++11")
+  add_compile_options("-std=c++17")
   add_compile_options("-restrict")
   add_compile_options("-diag-enable=all")
   add_compile_options("-diag-disable=${INTEL_DIAG_DISABLE}")

@@ -467,7 +467,7 @@ public:
 
 };
 
-			
+
 class F32vec1
 {
 protected:
@@ -558,10 +558,10 @@ friend F32vec1 select_eq(const F32vec1 &a, const F32vec1 &b, const F32vec1 &c, c
 
 /* Figure out whether and how to define the output operators */
 #if defined(_IOSTREAM_) || defined(_CPP_IOSTREAM) || defined(_GLIBCXX_IOSTREAM) || defined (_LIBCPP_IOSTREAM)
-//#define DVEC_DEFINE_OUTPUT_OPERATORS
+// #define DVEC_DEFINE_OUTPUT_OPERATORS
 #define DVEC_STD std::
 #elif defined(_INC_IOSTREAM) || defined(_IOSTREAM_H_)
-//#define DVEC_DEFINE_OUTPUT_OPERATORS
+// #define DVEC_DEFINE_OUTPUT_OPERATORS
 #define DVEC_STD
 #endif
 
@@ -1664,6 +1664,22 @@ public:
     /* Conversion functions */
     operator  __m512() const { return vec; } /* Convert to __m512 */
 
+    /* Logical Operators */
+    friend F32vec16 operator &(const F32vec16 &a, const F32vec16 &b) {
+        return _mm512_castsi512_ps(_mm512_and_si512(
+                                   _mm512_castps_si512(a),
+                                   _mm512_castps_si512(b)));
+    }
+    friend F32vec16 operator |(const F32vec16 &a, const F32vec16 &b) {
+        return _mm512_castsi512_ps(_mm512_or_si512(
+                                   _mm512_castps_si512(a),
+                                   _mm512_castps_si512(b)));
+    }
+    friend F32vec16 operator ^(const F32vec16 &a, const F32vec16 &b) {
+        return _mm512_castsi512_ps(_mm512_xor_si512(
+                                   _mm512_castps_si512(a),
+                                   _mm512_castps_si512(b)));
+    }
 
     /* Arithmetic Operators */
     friend F32vec16 operator +(const F32vec16 &a, const F32vec16 &b) {
@@ -1681,6 +1697,95 @@ public:
 
     F32vec16& operator +=(const F32vec16 &a)
         { return *this = *this + a; }
+    F32vec16& operator -=(const F32vec16 &a)
+        { return *this = *this - a; }
+    F32vec16& operator *=(const F32vec16 &a)
+        { return *this = *this * a; }
+    F32vec16& operator /=(const F32vec16 &a)
+        { return *this = *this / a; }
+    F32vec16& operator &=(const F32vec16 &a)
+        { return *this = *this & a; }
+    F32vec16& operator ^=(const F32vec16 &a)
+        { return *this = *this ^ a; }
+    F32vec16& operator |=(const F32vec16 &a)
+        { return *this = *this | a; }
+
+    F32vec16 operator - () const {
+        return _mm512_castsi512_ps(_mm512_xor_si512(
+                            _mm512_set1_epi32(0x80000000),
+                            _mm512_castps_si512(*this)));
+    }
+    F32vec16& flip_sign () { return *this = - *this;}
+
+    void set_zero() { vec = _mm512_setzero_ps(); }
+    void init (float f0, float f1, float f2, float f3,
+               float f4, float f5, float f6, float f7,
+               float f8, float f9, float f10, float f11,
+               float f12, float f13, float f14, float f15)
+    {
+        vec = _mm512_set_ps(f15,f14,f13,f12,f11,f10,f9,f8,
+                            f7,f6,f5,f4,f3,f2,f1,f0);
+    }
+    /* Mixed vector-scalar operations */
+    friend F32vec16 operator +(const F32vec16 &a, const float &f) {
+        return _mm512_add_ps(a, _mm512_set1_ps(f));
+    }
+    friend F32vec16 operator -(const F32vec16 &a, const float &f) {
+        return _mm512_sub_ps(a, _mm512_set1_ps(f));
+    }
+    friend F32vec16 operator /(const F32vec16 &a, const float &f) {
+        return _mm512_div_ps(a, _mm512_set1_ps(f));
+    }
+    friend F32vec16 operator *(const F32vec16 &a, const float &f) {
+        return _mm512_mul_ps(a, _mm512_set1_ps(f));
+    }
+    F32vec16& operator +=(const float &f) {
+        return *this = *this + f;
+    }
+    F32vec16& operator -=(const float &f) {
+        return *this = *this - f;
+    }
+    F32vec16& operator *=(const float &f) {
+        return *this = *this * f;
+    }
+    F32vec16& operator /=(const float &f) {
+        return *this = *this / f;
+    }
+
+    bool is_zero() const {
+        __m512 a = _mm512_setzero_ps();
+        __mmask16 k = _mm512_cmpeq_ps_mask(a, *this);
+        return (k == 0xffff);
+    }
+    /* Dot product */
+    void dot (float& p, const F32vec16& rhs) const {
+        p = add_horizontal(*this * rhs);
+    }
+    float dot (const F32vec16& rhs) const {
+        return (add_horizontal(*this * rhs));
+    }
+    /* Length */
+    float length_sqr()  const { return dot(*this); }
+    float length() const {
+        float f = dot(*this);
+        __m128 f2 = _mm_set_ss(f);
+        __m128 f3 = _mm_sqrt_ss(f2);
+        return _mm_cvtss_f32(f3);
+    }
+
+    /* Normalize */
+    bool normalize() { float l = length(); *this /= l; return true; }
+
+    /* Horizontal Add */
+    friend float add_horizontal(const F32vec16 &a) {
+        return _mm512_reduce_add_ps(a);
+    }
+    friend float mul_horizontal(const F32vec16 &a) {
+        return _mm512_reduce_mul_ps(a);
+    }
+    friend F32vec16 rsqrt(const F32vec16 &a) {
+        return _mm512_rsqrt14_ps(a);
+    }
 
 };
 
@@ -1926,6 +2031,45 @@ public:
     /* Constructor from M512vec */
     Is32vec16(const M512vec &m) : I32vec16(m) {}
 
+    /* Shift Arithmetic Operations */
+    Is32vec16 operator>>(const I32vec16 &a) const {
+        return _mm512_srav_epi32(*this, a);
+    }
+    Is32vec16 operator>>(int count) const {
+        return _mm512_srai_epi32(*this, count);
+    }
+    Is32vec16& operator>>=(const I32vec16 &a) {
+        return *this = *this >> a;
+    }
+    Is32vec16& operator>>=(int count) {
+        return *this = *this >> count;
+    }
+
+    /* Element Access for Debug, No data modified */
+    const int& operator[](int i) const {
+        /* Only 16 elements to access */
+        assert(static_cast<unsigned int>(i) < 16);
+        return _MM_16DW(i,vec);
+    }
+
+    /* Element Access for Debug */
+    int& operator[](int i) {
+        /* Only 16 elements to access */
+        assert(static_cast<unsigned int>(i) < 16);
+        return _MM_16DW(i,vec);
+    }
+    Is32vec16 operator *(const Is32vec16 &a) const {
+        return _mm512_mullo_epi32(*this, a);
+    }
+    Is32vec16 operator *=(const Is32vec16 &a) {
+        return *this = *this * a;
+    }
+
+    friend Is32vec16 operator+(const Is32vec16 &a, const Is32vec16 &b) {
+        return (Is32vec16)_mm512_add_epi32(a, b);
+    }
+
+    Is32vec16& operator+= (const Is32vec16& rhs) { *this = *this + rhs; return *this; }
 };
 
 /* Iu32vec16 Class:
@@ -2048,6 +2192,8 @@ public:
 
     /* Constructor */
     Is16vec32(const M512vec &m) : I16vec32(m) {}
+
+    friend Is16vec32 operator-(Is16vec32 lhs, Is16vec32 rhs) { return _mm512_sub_epi16(lhs, rhs); }
 
 };
 
@@ -2379,7 +2525,7 @@ public:
 #pragma pack(pop) /* 32-B aligned */
 #endif
 
-//#undef DVEC_DEFINE_OUTPUT_OPERATORS
+#undef DVEC_DEFINE_OUTPUT_OPERATORS
 #undef DVEC_STD
 
 #ifdef DVEC_USE_CPP11_DEFAULTED_FUNCTIONS

@@ -43,7 +43,7 @@ int32_t g_nIndex_NULL[188][84];
 int32_t g_ratetable[188][18444];
 
 /* Rate matching bit to byte table */
-__declspec (align(64)) uint8_t g_BitToByteTABLE[8192];
+__align(64) uint8_t g_BitToByteTABLE[8192];
 
 
 struct bblib_rate_match_init_sse
@@ -64,7 +64,7 @@ struct bblib_rate_match_init_sse
 
 bblib_rate_match_init_sse do_constructor_rate_matching_sse;
 
-/** 
+/**
  * @brief Bit to byte table generation
  * @param[out] pTable (Lookup table for bit to byte conversion)
  * @return void
@@ -118,10 +118,9 @@ int32_t init_rate_matching_lte_sse()
     char *pCheckPath1 = NULL, *pCheckPath2 = NULL, *pCheckPath3 = NULL;
 
     uint8_t *pBitToByte = &g_BitToByteTABLE[0];
-
     FILE* stream;
     uint32_t len_read, path_len, str_offset;
-    
+
     /* Get SDK root folder from environment variable */
     char* dir_sdk = getenv( "DIR_WIRELESS_SDK" );
     if( dir_sdk == NULL )
@@ -144,13 +143,13 @@ int32_t init_rate_matching_lte_sse()
     }
 #else
     pCheckPath1 = strstr(dir_sdk, "sdk/build-avx");
-    pCheckPath2 = strstr(dir_sdk, "sdk//build-avx");
-    pCheckPath3 = strstr(dir_sdk, "sdk/build-snc");
+    pCheckPath2 = strstr(dir_sdk, "sdk/build-snc");
+    pCheckPath3 = strstr(dir_sdk, "sdk/build-spr");
 
     if ((pCheckPath1 == NULL) && (pCheckPath2 == NULL) && (pCheckPath3 == NULL))
     {
         printf("%s is not valid!!!  DIR_WIRELESS_SDK must include\n", dir_sdk);
-        printf("sdk/build-avx or sdk//build-avx or sdk/build-snc somewhere in path\n");
+        printf("sdk/build-avx or sdk/build-snc or sdk/build-spr somewhere in path\n");
         exit(-1);
     }
 #endif
@@ -194,7 +193,7 @@ int32_t init_rate_matching_lte_sse()
     file_name[path_len] = '\0';
     strncat( file_name, file_nNum_NULL, (sizeof(file_nNum_NULL) + 1));
 
-    if((stream=fopen( file_name,"rb"))!=NULL)
+    if((stream=fopen(file_name,"rb"))!=NULL)
     {
         len_read = fread( g_nNum_NULL, sizeof(int32_t), sizeof(g_nNum_NULL)/4, stream );
         fclose(stream);
@@ -205,7 +204,7 @@ int32_t init_rate_matching_lte_sse()
         printf( "File %s could not be opened in rate matching, size  %d\n", file_name, len_read);
         exit(-1);
     }
-    
+
     /* Read from file "nindex_null.bin", into global buffer g_nIndex_NULL[188][84] */
     memset(file_name, 0, sizeof(file_name));
     strncpy( file_name, dir_sdk, (sizeof(file_name) - 32));
@@ -241,7 +240,7 @@ int32_t init_rate_matching_lte_sse()
         printf("File %s could not be opened in rate matching, size  %d\n", file_name, len_read);
         exit(-1);
     }
-    
+
     /* init bit to byte conversion table */
     MakeBitToByteTable( pBitToByte );
 

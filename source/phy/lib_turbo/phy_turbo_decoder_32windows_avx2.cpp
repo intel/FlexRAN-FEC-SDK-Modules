@@ -49,12 +49,16 @@
 /* turbo encoder and decoder function */
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 
 #include "immintrin.h"
 
 #include "phy_turbo_internal.h"
 #include "phy_crc.h"
 #include "phy_turbo.h"
+#include "gcc_inc.h"
+#include "bblib_common.hpp"
+
 #if defined (_BBLIB_AVX2_) || defined (_BBLIB_AVX512_)
 static __m256i TD_constant256 = _mm256_setr_epi8(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 static __m128i TD_constant_0_16 = _mm_setr_epi8(15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
@@ -145,7 +149,6 @@ int32_t
 bblib_lte_turbo_decoder_32windows_avx2(const struct bblib_turbo_decoder_request *request,
     struct bblib_turbo_decoder_response *response)
 {
-    int32_t retVal = -1;
     int32_t NumIter = 0;
     int32_t C = request->c;
     int32_t K = request->k;
@@ -254,10 +257,11 @@ bblib_lte_turbo_decoder_32windows_avx2(const struct bblib_turbo_decoder_request 
             }
             if (crc_response.check_passed)
             {
-                if (request->early_term_disable)
-                    retVal = NumIter;
-                else
+                if (request->early_term_disable == 0)
+                {
+                    response->crc_status = 1;
                     return NumIter;
+                }
             }
 
         }
@@ -314,10 +318,11 @@ bblib_lte_turbo_decoder_32windows_avx2(const struct bblib_turbo_decoder_request 
             }
             if (crc_response.check_passed)
             {
-                if (request->early_term_disable)
-                    retVal = NumIter;
-                else
+                if (request->early_term_disable == 0)
+                {
+                    response->crc_status = 1;
                     return NumIter;
+                }
             }
         }
     }
@@ -341,10 +346,10 @@ bblib_lte_turbo_decoder_32windows_avx2(const struct bblib_turbo_decoder_request 
     }
     if (crc_response.check_passed)
     {
-        return NumIter;
+        response->crc_status = 1;
     }
 
-    return retVal;
+    return NumIter;
 }
 
 static __m256i signBitMask = _mm256_setr_epi8(0x80, 0x80, 0x80, 0x80,0x80, 0x80, 0x80,
@@ -397,6 +402,8 @@ int32_t SISO_32windows(int8_t *OutputAddress, int8_t *InputAddress,
      __m256i min_distance = _mm256_set1_epi8(127);
 
      int16_t bitWord0, bitWord1;
+
+     KLOCWORK_SPECTRE_VARIANT1_ISSUE_AVOID_SIGNED(WindowSize);
 
      initalpha1 = _mm256_load_si256(initalpha + 1);
      initalpha2 = _mm256_load_si256(initalpha + 2);

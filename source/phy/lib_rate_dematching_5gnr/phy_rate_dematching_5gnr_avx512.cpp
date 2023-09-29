@@ -26,13 +26,46 @@
  * @file phy_rate_dematching_5gnr_avx512.cpp
  * @brief  Implementation for rate dematching functions
  */
-
+#ifdef _BBLIB_AVX512_
 #include "phy_rate_dematching_5gnr_internal.h"
 
 #include <string.h>
+#include <immintrin.h> // AVX
+
+#define USE_IPPLIB
+#ifdef USE_IPPLIB
 #include <ipp.h>
 #include <ipps.h>
-#include <immintrin.h> // AVX
+#else
+void rippsSet_8u(uint8_t val, uint8_t* pDst, int32_t len);
+void rippsSet_8u(uint8_t val, uint8_t* pDst, int32_t len) {
+    /* check pointer to the vector */
+    if (0 == pDst) return;
+    /* check value of the vector size */
+    if (0 >= len) return;
+
+    {
+        int n;
+        /* loop for initialize the elements to value */
+        for (n = 0; n < len; ++n) pDst[n] = val;
+        return;
+    }
+}
+void rippsCopy_8u(const uint8_t* pSrc, uint8_t* pDst, int32_t len);
+void rippsCopy_8u(const uint8_t* pSrc, uint8_t* pDst, int32_t len) {
+    /* check pointers to the vectors */
+    if (0 == pSrc || 0 == pDst) return;
+    /* check value of the vectors size */
+    if (0 >= len) return;
+
+    {
+        int n;
+        /* loop for copies the elements */
+        for (n = 0; n < len; ++n) pDst[n] = pSrc[n];
+        return;
+    }
+}
+#endif
 
 #define MAX_E (128*1024)
 
@@ -71,7 +104,7 @@ void wrapAdd2HarqBuffer_avx512(int8_t *pIn, int8_t *pOut, int32_t len)
 int32_t harq_combine_avx512(struct bblib_rate_dematching_5gnr_request *request,
     struct bblib_rate_dematching_5gnr_response *response, int8_t *pDeInterleave)
 {
-    __declspec (align(64)) int8_t alignedBuffer[40 * 1024];
+    __align(64) int8_t alignedBuffer[40 * 1024];
     int8_t *pHarqTmp, *pHarq = (int8_t *)request->p_harq;
     int32_t ncbStep_64 = 0, ncbTmp = 0;
     __m512i ymm0_avx512;
@@ -101,10 +134,20 @@ int32_t harq_combine_avx512(struct bblib_rate_dematching_5gnr_request *request,
     while (offset_e < request->e) {
         length = MIN(request->e - offset_e, ncb_ - offset_ncb);
         if (offset_ncb > 0)
+#ifdef USE_IPPLIB
             ippsSet_8u(0, (uint8_t *)alignedBuffer, offset_ncb);
+#else
+            rippsSet_8u(0, (uint8_t*)alignedBuffer, offset_ncb);
+#endif
+
         if ((offset_e + offset_ncb) > 0) {
+#ifdef USE_IPPLIB
             ippsCopy_8u((uint8_t *) pDeInterleave + offset_e,
                     (uint8_t *) alignedBuffer + offset_ncb, length);
+#else
+            rippsCopy_8u((uint8_t*)pDeInterleave + offset_e,
+                (uint8_t*)alignedBuffer + offset_ncb, length);
+#endif
             wrapAdd2HarqBuffer_avx512(alignedBuffer, pHarq, length + offset_ncb);
         } else
             wrapAdd2HarqBuffer_avx512(pDeInterleave, pHarq, length + offset_ncb);
@@ -762,8 +805,9 @@ void deInterleave_avx512(uint8_t *pCbIn, int8_t *pDeInterleave, bblib_rate_demat
 void bblib_rate_dematching_5gnr_avx512(struct bblib_rate_dematching_5gnr_request *req,
 struct bblib_rate_dematching_5gnr_response *resp)
 {
-    __declspec (align(64)) int8_t internalBuffer[MAX_E];
+    __align(64) int8_t internalBuffer[MAX_E];
 
     deInterleave_avx512((uint8_t *) req->p_in, internalBuffer, req);
     harq_combine_avx512(req, resp, internalBuffer);
 }
+#endif

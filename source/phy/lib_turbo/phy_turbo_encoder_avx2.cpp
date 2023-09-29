@@ -35,6 +35,8 @@
 
 #include "phy_turbo.h"
 #include "phy_turbo_internal.h"
+#include "gcc_inc.h"
+
 #if defined (_BBLIB_AVX2_) || defined (_BBLIB_AVX512_)
 extern __align(64) uint16_t g_OutputWinTable8_sdk[256][8];
 extern __align(64) uint8_t g_TailWinTable_sdk[8];
@@ -107,11 +109,18 @@ bblib_lte_turbo_encoder_avx2(const struct bblib_turbo_encoder_request *request,
     int32_t len256, lens, idx;
     int8_t bt0 = 0, bt1 = 0, bt2 = 0;
     int8_t b80, b81, yr80, yr81;
+    uint32_t requestLength = request->length;
+    // Add this line to fix klocwork SPECTRE.VARIANT1 warning
+    if (requestLength >= (MAX_DATA_LEN_INTERLEAVE*4))
+    {
+        printf("Request length for turbo encoder out of range!\n");
+        return -1;
+    }
 
     uint8_t State0, State1, Tail0, Tail1, Tmp1, Tmp2;
     uint16_t TmpShort1, TmpShort2;
 
-    len256 = request->length & 0xFFFFFFE0;
+    len256 = requestLength & 0xFFFFFFE0;
     b0 = _mm256_setzero_si256();
     b1 = _mm256_setr_epi8(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x20);
     yr1 = _mm256_setzero_si256();
@@ -220,7 +229,7 @@ bblib_lte_turbo_encoder_avx2(const struct bblib_turbo_encoder_request *request,
         }
     }
 
-    lens = request->length - len256;
+    lens = requestLength - len256;
 
     if (unlikely(lens == 0))
     {
@@ -248,9 +257,9 @@ bblib_lte_turbo_encoder_avx2(const struct bblib_turbo_encoder_request *request,
         bt1 = bt1 | ((b81 & 0x20) >> 1);
         bt2 = bt2 | ((yr81 & 0x20) >> 1);
 
-        *(response->output_win_0 + request->length) = bt0;
-        *(response->output_win_1 + request->length) = bt1;
-        *(response->output_win_2 + request->length) = bt2;
+        *(response->output_win_0 + requestLength) = bt0;
+        *(response->output_win_1 + requestLength) = bt1;
+        *(response->output_win_2 + requestLength) = bt2;
         return 0;
     }
     else
@@ -298,7 +307,7 @@ bblib_lte_turbo_encoder_avx2(const struct bblib_turbo_encoder_request *request,
             State1 = _mm_extract_epi8(a1_tail, 8) & 0x7;
 
             len256 += 64;
-            lens = request->length - len256;
+            lens = requestLength - len256;
 
             if (lens == 0)
             {
@@ -326,9 +335,9 @@ bblib_lte_turbo_encoder_avx2(const struct bblib_turbo_encoder_request *request,
                 bt1 = bt1 | ((b81 & 0x20) >> 1);
                 bt2 = bt2 | ((yr81 & 0x20) >> 1);
 
-                *(response->output_win_0 + request->length) = bt0;
-                *(response->output_win_1 + request->length) = bt1;
-                *(response->output_win_2 + request->length) = bt2;
+                *(response->output_win_0 + requestLength) = bt0;
+                *(response->output_win_1 + requestLength) = bt1;
+                *(response->output_win_2 + requestLength) = bt2;
 
                 return 0;
             }
@@ -341,7 +350,7 @@ bblib_lte_turbo_encoder_avx2(const struct bblib_turbo_encoder_request *request,
         State0 = _mm_extract_epi8(a01, 0) & 0x7;
         State1 = _mm_extract_epi8(a11, 0) & 0x7;
 
-        for (idx = len256; idx < request->length; idx++)
+        for (idx = len256; idx < requestLength; idx++)
         {
             Tmp1 = *(request->input_win + idx);
             Tmp2 = *(input_win_2 + idx);
@@ -361,13 +370,13 @@ bblib_lte_turbo_encoder_avx2(const struct bblib_turbo_encoder_request *request,
         Tail1 = g_TailWinTable_sdk[State1];
         Tail1 = Tail1 >> 2;
 
-        *(response->output_win_0 + request->length) = (Tail0 & (128 + 64)) + (Tail1 & (32 + 16));
+        *(response->output_win_0 + requestLength) = (Tail0 & (128 + 64)) + (Tail1 & (32 + 16));
         Tail0 = Tail0 << 2;
         Tail1 = Tail1 << 2;
-        *(response->output_win_1 + request->length) = (Tail0 & (128 + 64)) + (Tail1 & (32 + 16));
+        *(response->output_win_1 + requestLength) = (Tail0 & (128 + 64)) + (Tail1 & (32 + 16));
         Tail0 = Tail0 << 2;
         Tail1 = Tail1 << 2;
-        *(response->output_win_2 + request->length) = (Tail0 & (128 + 64)) + (Tail1 & (32 + 16));
+        *(response->output_win_2 + requestLength) = (Tail0 & (128 + 64)) + (Tail1 & (32 + 16));
 
     }
 

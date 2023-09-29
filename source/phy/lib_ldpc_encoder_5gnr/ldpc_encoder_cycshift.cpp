@@ -1,6 +1,6 @@
 #include "ldpc_encoder_cycshift.h"
 
-
+#ifdef _BBLIB_AVX512_
 /* Cycle Shift AVX512 implementation when Zc Size > 288 and is multiple of 32bits */
 inline __m512i cycle_bit_left_shift_from288to384(__m512i data, int16_t cycLeftShift, int16_t zcSize, int8_t zcIndex, __m512i swapIdx0)
 {
@@ -115,3 +115,4 @@ CYCLE_BIT_LEFT_SHIFT ldpc_select_left_shift_func(int16_t zcSize)
     else 
         return cycle_bit_left_shift_from144to256;
 }
+#endif

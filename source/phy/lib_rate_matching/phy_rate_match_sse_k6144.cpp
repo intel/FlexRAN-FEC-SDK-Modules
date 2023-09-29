@@ -549,7 +549,6 @@ bit_selection_complete(int32_t E, int32_t k0, int32_t Ncb,int32_t Kidx, int32_t 
     /* we use while to resolve the read/concatenation times and times again; */
     /* we use cnt to control the times of reading; */
     s_out = pout;
-
     while((cnt < E))
     {
         for(j = 0; j < nByte2; j += 8)

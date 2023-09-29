@@ -28,15 +28,14 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <ipp.h>
-#include <ipps.h>
 #include <immintrin.h>  /* AVX512 */
 #include "phy_ldpc_encoder_5gnr.h"
 #include "ldpc_encoder_cycshift.h"
 #include "phy_ldpc_encoder_5gnr_internal.h"
 
 #include "common_typedef_sdk.h"
-
+#include "gcc_inc.h"
+#ifdef _BBLIB_AVX512_
 /**
 *  @brief Adapter function for scattering/gathering data when Zs > 256 (ie. one way)
 *  @param [in] data input
@@ -512,8 +511,8 @@ int32_t bblib_ldpc_encoder_5gnr_avx512(struct bblib_ldpc_encoder_5gnr_request *r
         return(-1);
     }
     /* internal processing buffer allocated internally */
-    __declspec (align(64)) int8_t internalBuffer0[BG1_ROW_TOTAL * PROC_BYTES];
-    __declspec (align(64)) int8_t internalBuffer1[BG1_ROW_TOTAL * PROC_BYTES];
+    __align(64) int8_t internalBuffer0[BG1_ROW_TOTAL * PROC_BYTES];
+    __align(64) int8_t internalBuffer1[BG1_ROW_TOTAL * PROC_BYTES];
     const int16_t *pShiftMatrix;
     LDPC_ADAPTER_P ldpc_adapter_func;
     uint32_t cbEncLen, cbLen;
@@ -948,7 +947,7 @@ int16_t Bg1Address[BG1_NONZERO_NUM] =
 };
 
 /* Table generated for BG1 from H Matrix in Table 5.3.2-3 in 38.212 */
-__declspec (align(64)) int16_t Bg1HShiftMatrix[BG1_NONZERO_NUM*I_LS_NUM] =
+__align(64) int16_t Bg1HShiftMatrix[BG1_NONZERO_NUM*I_LS_NUM] =
 {
     250,
     2,
@@ -3661,7 +3660,7 @@ int16_t Bg2Address[BG2_NONZERO_NUM] =
 };
 
 /* Table generated for BG2 from H Matrix in Table 5.3.2-3 in 38.212 */
-__declspec (align(64)) int16_t Bg2HShiftMatrix[BG2_NONZERO_NUM*I_LS_NUM] =
+__align(64) int16_t Bg2HShiftMatrix[BG2_NONZERO_NUM*I_LS_NUM] =
 {
     9,
     167,
@@ -5193,10 +5192,10 @@ int16_t permuteTabUpto128[8][32] =
     { 0, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }, //32
     { 0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }, //48
     { 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }, //64
-    { 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }, //80    
+    { 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }, //80
     { 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }, //96
     { 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 7, 8, 9, 10, 11, 12, 13, 14, 15 }, //112
     { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 8, 9, 10, 11, 12, 13, 14, 15 }, //128
     { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 8, 9, 10, 11, 12, 13, 14, 15 }  //invalid
 };
-
+#endif

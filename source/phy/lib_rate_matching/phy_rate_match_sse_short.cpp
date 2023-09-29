@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "bblib_common.hpp"
+#include "bblib_common_const.h"
 
 #include <smmintrin.h> /* SSE 4 for media */
 #include <string.h>
@@ -129,14 +131,17 @@ int32_t rate_matching_turbo_lte_short_sse(int32_t r, int32_t C, int8_t direction
                     uint8_t * tin2, uint8_t * output,
                     uint32_t OutputLen,uint8_t *pTable)
 {
-    int32_t k0,i;
+    // Add check to fix klocwork SPECTRE.VARIANT1 warning
+    KLOCWORK_SPECTRE_VARIANT1_ISSUE_AVOID_SIGNED(nLen);
+    int32_t k0, i;
+    uint8_t *v0, *tmp1;
     int32_t nCol = 32;
     int32_t nRow = nLen / 32 + 1;
-    uint8_t *v0, *tmp1;
     uint8_t dd[18444];
     uint8_t *d0 = dd;
     uint8_t *d1 = d0 + nLen;
     uint8_t *d2 = d0 + (nLen << 1);
+
     /* here, d0, d1, d2 should be in the continuous address. */
     // +4 added for Klocworks warning that avx might write extra 3 bytes
     uint8_t tbuffer[18444 + 4];
@@ -259,10 +264,23 @@ int32_t rate_matching_turbo_lte_short_sse(int32_t r, int32_t C, int8_t direction
     int32_t temp3 = Ncb / (8 * nRow);
     if(Ncb % (8 * nRow) > 0)
         temp3++;
+
     if (bypass_rvidx == 1)
         k0 = 0;
     else
-        k0 =  nRow * (2 * temp3 * rvidx + 2);
+    {
+        if ((rvidx >= 0) && (rvidx < 4))
+        {
+            // Add this line to fix klocwork SPECTRE.VARIANT1 warning
+            rvidx = abs(rvidx);
+            k0 =  nRow * (2 * temp3 * rvidx + 2);
+        }
+        else
+        {
+           printf("Invalid redundancy version %d valid value:0/1/2/3\n", rvidx);
+           return -1;
+        }
+    }
 
     /* ============================================================== */
     /* Kidx is the type of codeblock length in 188 selection */
@@ -339,7 +357,7 @@ int32_t rate_matching_turbo_lte_short_sse(int32_t r, int32_t C, int8_t direction
     //add for Klocworks
     if (E < 0)
         E = 0;
-   if (E > 18444)
+    if (E > 18444)
         E = 18444;
 
     unpack_byte_to_bit(s0, output, E, direction);

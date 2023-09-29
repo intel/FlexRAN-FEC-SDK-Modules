@@ -75,7 +75,7 @@ static int ZvalueToIndex(int z)
   else if ((z % 2) == 0)
     return (0);
   else
-    throw std::runtime_error(std::string("Z-value is not a product of 2, 3, 5, 7, 9, 11, 13 or 15"));
+    throw std::runtime_error("Z-value is not a product of 2, 3, 5, 7, 9, 11, 13 or 15");
 }
 
 // Setup an internal request containg some extra information
@@ -130,7 +130,7 @@ static void LdpcSetupInternalRequest(SimdLdpc::DecoderParamsInt16 *decoderReques
     std::copy_n(circulantsTable, nCirculants, decoderRequest->circulants);
   }
   else
-    throw std::runtime_error(std::string("DecoderRequest->basegraph value is neither 1 nor 2\n"));
+    throw std::runtime_error("DecoderRequest->basegraph value is neither 1 nor 2\n");
 
   //Now g_circulants needs to be modulo-z
   for (int n = 0; n < nCirculants; ++n)
@@ -167,7 +167,9 @@ void SimdLdpc::DecodeAvx2(const SimdLdpc::Request* request, SimdLdpc::Response* 
   LdpcDecoderTop<Is16vec16>(request, response);
 }
 
+#ifdef _BBLIB_AVX512_
 void SimdLdpc::DecodeAvx512(const SimdLdpc::Request* request, SimdLdpc::Response *response)
 {
   LdpcDecoderTop<Is16vec32>(request, response);
 }
+#endif

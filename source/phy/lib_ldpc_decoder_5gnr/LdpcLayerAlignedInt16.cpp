@@ -297,7 +297,7 @@ void LdpcKernelLayerInt16Aligned(SimdLdpc::LayerParamsInt16& request,
 
     // Check the before and after parity checks are all zero. The check confirms that the (kernel)
     // layer passed parity before and after the updates.
-    response.parityCheckErrors |= GetNegativeMask(sumProductBeforeUpdate | sumProductAfterUpdate);
+    response.parityCheckErrors |= (int32_t)GetNegativeMask(sumProductBeforeUpdate | sumProductAfterUpdate);
   }
 }
 
@@ -388,7 +388,7 @@ void LdpcOrthogonalLayerInt16Aligned(SimdLdpc::LayerParamsInt16& request)
     auto min1PosUpdate = SIMD();
 
     SIMD sumProduct = SIMD();
-    SIMD unused;
+    SIMD unused = SIMD();
 
     //Load the check-node data
     SIMD min1 = min1p[n];
@@ -444,7 +444,7 @@ void SimdLdpc::LdpcLayerAlignedInt16(SimdLdpc::LayerParamsInt16& request, SimdLd
         LdpcKernelLayerInt16Aligned<19, SIMD>(request, response);
         break;
       default:
-        throw std::runtime_error(std::string("No Template defined for requested KERNEL row-weight in ldpcLayerInt16TemplateSelect.\n"));
+        throw std::runtime_error("No Template defined for requested KERNEL row-weight in ldpcLayerInt16TemplateSelect.\n");
     }
   }
   else
@@ -470,7 +470,7 @@ void SimdLdpc::LdpcLayerAlignedInt16(SimdLdpc::LayerParamsInt16& request, SimdLd
       case 17: LdpcOrthogonalLayerInt16Aligned<17, SIMD>(request); break;
       case 18: LdpcOrthogonalLayerInt16Aligned<18, SIMD>(request); break;
       default:
-        throw std::runtime_error(std::string("No template defined for requested row-weight in ldpcLayerInt16TemplateSelect.\n"));
+        throw std::runtime_error("No template defined for requested row-weight in ldpcLayerInt16TemplateSelect.\n");
     }
   }
 }
@@ -510,11 +510,15 @@ void SimdLdpc::LdpcAlignedRestore(SimdLdpc::LayerParamsInt16& request, SimdLdpc:
 template void
 SimdLdpc::LdpcAlignedRestore<Is16vec16>(LayerParamsInt16& request, DecoderResponseInt16& response);
 
+#ifdef _BBLIB_AVX512_
 template void
 SimdLdpc::LdpcAlignedRestore<Is16vec32>(LayerParamsInt16& request, DecoderResponseInt16& response);
+#endif
 
 template void
 SimdLdpc::LdpcLayerAlignedInt16<Is16vec16>(LayerParamsInt16& request, LayerOutputsInt16& response);
 
+#ifdef _BBLIB_AVX512_
 template void
 SimdLdpc::LdpcLayerAlignedInt16<Is16vec32>(LayerParamsInt16& request, LayerOutputsInt16& response);
+#endif

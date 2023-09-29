@@ -23,7 +23,7 @@
 **********************************************************************/
 
 #include <immintrin.h>
-#include <dvec.h>
+#include "dvec_inc.h"
 
 #include <complex>
 #include <iostream>
@@ -116,7 +116,7 @@ static void GenericUnpack(const T *input, T *output, size_t numElements) {
         }
     }
 }
-
+#ifdef _BBLIB_AVX512_
 static void Pack16x4(const float *input, float *output, size_t numElements) {
     F32vec16 *inputV = (F32vec16 *) input;
 
@@ -341,6 +341,7 @@ static void Unpack16x8(const float *input, float *output, size_t numElements) {
     const auto r7 = _mm512_unpackhi_ps(inputV[6], inputV[7]);
     CreateRows(r4, r5, r6, r7, outputV[1], outputV[3], outputV[5], outputV[7]);
 }
+#endif
 
 static void Pack8xN(const float *input, float *output, size_t numElements) {
     const size_t numRows = numElements / 8;
@@ -350,7 +351,7 @@ static void Pack8xN(const float *input, float *output, size_t numElements) {
     for (int currentLoop = 0; currentLoop < numLoops; currentLoop++) {
         auto Src = [&](int index) {
             const int offset = 8 * currentLoop + numRows * index;
-            return _mm256_load_ps(input + offset);
+            return _mm256_loadu_ps(input + offset);
         };
 
         constexpr int k_laneSwap_2_1 = 0b00100000;
@@ -565,6 +566,7 @@ void UnpackSimd8(const T *input, T *output, size_t numElements) {
     }
 }
 
+#ifdef _BBLIB_AVX512_
 template<typename T>
 void PackSimd16(const T *input, T *output, size_t numElements) {
     constexpr unsigned k_simdSize = 16;
@@ -597,6 +599,7 @@ void UnpackSimd16(const T *input, T *output, size_t numElements) {
         GenericUnpack<T, 16>(input, output, numElements);
     }
 }
+#endif
 
 template
 void PackSimd8(const float *input, float *output, size_t numElements);
@@ -604,11 +607,15 @@ void PackSimd8(const float *input, float *output, size_t numElements);
 template
 void UnpackSimd8(const float *input, float *output, size_t numElements);
 
+#ifdef _BBLIB_AVX512_
+
 template
 void PackSimd16(const float *input, float *output, size_t numElements);
 
 template
 void UnpackSimd16(const float *input, float *output, size_t numElements);
+
+#endif
 
 template<typename SIMD_TYPE, typename ELEM_TYPE>
 void simd_print(void* ptr, uint16_t fmt)

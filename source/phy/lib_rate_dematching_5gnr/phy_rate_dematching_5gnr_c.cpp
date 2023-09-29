@@ -28,8 +28,6 @@
  */
 
 #include "phy_rate_dematching_5gnr_internal.h"
-#include <ipp.h>
-#include <ipps.h>
 #include <string.h>
 
 
@@ -81,7 +79,7 @@ void harq_combine(struct bblib_rate_dematching_5gnr_request *request,
 void bblib_rate_dematching_5gnr_c(struct bblib_rate_dematching_5gnr_request *req,
 struct bblib_rate_dematching_5gnr_response *resp)
 {
-    __declspec (align(64)) int8_t internalBuffer[128 * 1024];
+    __align(64) int8_t internalBuffer[128 * 1024];
     deInterleave(req->p_in, internalBuffer, req);
     harq_combine(req,resp,internalBuffer);
 }

@@ -384,8 +384,13 @@ void SimdLdpc::LdpcLayeredDecoderAlignedInt16(SimdLdpc::DecoderParamsInt16& requ
     //Only break if more than one iteration has executed. This avoids the
     //all-zeros codeword trap, as we currently treat an LLR of 0 as a +VE number
     //in GetNegativeMask()
+
+    //By verification, all 0 LLR always derive to all 0, means parity-check is always passed in GetNegativeMask()
+    //Thus not necessary to terminate more than one iteration for this trap - if it passes in first iteration, then it must pass following ones
+    //Eventually we can reply on RLC to avoid this issue
     lastIter = iter;
-    if ((parityErrorCount == 0) && (iter > 1))
+    //if ((parityErrorCount == 0) && (iter > 1))
+    if (parityErrorCount == 0)
       break;
   }
 
@@ -399,6 +404,9 @@ void SimdLdpc::LdpcLayeredDecoderAlignedInt16(SimdLdpc::DecoderParamsInt16& requ
 template void
 SimdLdpc::LdpcLayeredDecoderAlignedInt16<Is16vec16>(SimdLdpc::DecoderParamsInt16& request,
                                                                   SimdLdpc::DecoderResponseInt16& response);
+
+#ifdef _BBLIB_AVX512_
 template void
 SimdLdpc::LdpcLayeredDecoderAlignedInt16<Is16vec32>(SimdLdpc::DecoderParamsInt16& request,
                                                              SimdLdpc::DecoderResponseInt16& response);
+#endif

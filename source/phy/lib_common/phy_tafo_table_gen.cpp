@@ -29,6 +29,7 @@
 #include <string.h>
 #include "bblib_common.hpp"
 #include "phy_tafo_table_gen.h"
+#include "bblib_common_const.h"
 
 #ifndef PI
 #define PI ((float) 3.14159265358979323846)
@@ -96,13 +97,11 @@ void bblib_init_common_time_offset_tables(const struct bblib_ta_request *request
 
 }
 
-
-
 void bblib_init_common_frequency_compensation_tables(const struct bblib_fo_request *request, struct bblib_fo_response *response)
 {
     
     int16_t nFft = request->n_fft_size;
-    int16_t n, i;
+    int16_t n;
     double tempTO = 0, pi = PI;
     
     int16_t cosine, sine;
@@ -113,12 +112,108 @@ void bblib_init_common_frequency_compensation_tables(const struct bblib_fo_reque
     {
         cosine = (int16_t)(round(cos(tempTO) * 32767.0));
         sine = (int16_t)(round(sin(tempTO) * 32767.0));
-        for (i = 0; i < 16; i++)
-        {
-            response->pFoCompScCp[2 * i + 32 * n] = cosine;
-            response->pFoCompScCp[2 * i + 1 + 32 * n] = sine;
-        }
+        response->pFoCompScCp[2 * n] = cosine;
+        response->pFoCompScCp[2 * n + 1] = sine;
         tempTO += factor;
     }
 }
 
+int16_t get_sys_para(const int16_t nMu, const int16_t nFftSize, int16_t *nMaxCp, int16_t *nMinCp, float *fSampleRate)
+{
+    int16_t nMaxCpTemp= 0, nMinCpTemp= 0;
+    float fSampleRateTemp = 0;
+    if (0 == nMu) // 0: 15khz
+    {
+        if ((N_FFT_SIZE_MU0_40MHZ == nFftSize)||(0 == nFftSize))
+        {
+            nMaxCpTemp = N_MAX_CP_MU0_40MHZ;
+            nMinCpTemp = N_MIN_CP_MU0_40MHZ;
+            fSampleRateTemp = N_SAMPLE_RATE_MU0_40MHZ;
+        }
+        else if (N_FFT_SIZE_MU0_20MHZ == nFftSize)
+        {
+            nMaxCpTemp = N_MAX_CP_MU0_20MHZ;
+            nMinCpTemp = N_MIN_CP_MU0_20MHZ;
+            fSampleRateTemp = N_SAMPLE_RATE_MU0_20MHZ;
+        }
+        else if (N_FFT_SIZE_MU0_15MHZ == nFftSize)
+        {
+            nMaxCpTemp = N_MAX_CP_MU0_15MHZ;
+            nMinCpTemp = N_MIN_CP_MU0_15MHZ;
+            fSampleRateTemp = N_SAMPLE_RATE_MU0_15MHZ;
+        }
+        else if (N_FFT_SIZE_MU0_10MHZ == nFftSize)
+        {
+            nMaxCpTemp = N_MAX_CP_MU0_10MHZ;
+            nMinCpTemp = N_MIN_CP_MU0_10MHZ;
+            fSampleRateTemp = N_SAMPLE_RATE_MU0_10MHZ;
+
+        }
+        else if (N_FFT_SIZE_MU0_5MHZ == nFftSize)
+        {
+            nMaxCpTemp = N_MAX_CP_MU0_5MHZ;
+            nMinCpTemp = N_MIN_CP_MU0_5MHZ;
+            fSampleRateTemp = N_SAMPLE_RATE_MU0_5MHZ;
+        }
+        else
+        {
+            //printf("Error! Currently not support this case\n");
+            return -1;
+        }
+    }
+    else if (1 == nMu) // 1: 30KHz
+    {
+        if ((N_FFT_SIZE_MU1_100MHZ == nFftSize)||(0 == nFftSize))
+        {
+            nMaxCpTemp = N_MAX_CP_MU1_100MHZ;
+            nMinCpTemp = N_MIN_CP_MU1_100MHZ;
+            fSampleRateTemp = N_SAMPLE_RATE_MU1_100MHZ;
+        }
+        else if (N_FFT_SIZE_MU1_60MHZ == nFftSize)
+        {
+            nMaxCpTemp = N_MAX_CP_MU1_60MHZ;
+            nMinCpTemp = N_MIN_CP_MU1_60MHZ;
+            fSampleRateTemp = N_SAMPLE_RATE_MU1_60MHZ;
+        }
+        else if (N_FFT_SIZE_MU1_40MHZ == nFftSize)
+        {
+            nMaxCpTemp = N_MAX_CP_MU1_40MHZ;
+            nMinCpTemp = N_MIN_CP_MU1_40MHZ;
+            fSampleRateTemp = N_SAMPLE_RATE_MU1_40MHZ;
+        }
+        else if (N_FFT_SIZE_MU1_20MHZ == nFftSize)
+        {
+            nMaxCpTemp = N_MAX_CP_MU1_20MHZ;
+            nMinCpTemp = N_MIN_CP_MU1_20MHZ;
+            fSampleRateTemp = N_SAMPLE_RATE_MU1_20MHZ;
+        }
+        else if (N_FFT_SIZE_MU1_10MHZ == nFftSize)
+        {
+            nMaxCpTemp = N_MAX_CP_MU1_10MHZ;
+            nMinCpTemp = N_MIN_CP_MU1_10MHZ;
+            fSampleRateTemp = N_SAMPLE_RATE_MU1_10MHZ;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    else if (3 == nMu) // 3: 120KHz
+    {
+        nMaxCpTemp = N_MAX_CP_MU3;
+        nMinCpTemp = N_MIN_CP_MU3;
+        fSampleRateTemp = N_SAMPLE_RATE_MU3;
+    }
+    else
+    {
+        return -1;
+    }
+
+    if (nMaxCp != NULL)
+        *nMaxCp = nMaxCpTemp;
+    if (nMinCp != NULL)
+        *nMinCp = nMinCpTemp;
+    if (fSampleRate != NULL)
+        *fSampleRate = fSampleRateTemp;
+    return 0;
+}

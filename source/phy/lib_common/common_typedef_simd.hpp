@@ -29,32 +29,17 @@
 #ifndef _COMMON_TYPEDEF_SIMD_HPP_
 #define _COMMON_TYPEDEF_SIMD_HPP_
 #include <immintrin.h>
+#include "gcc_inc.h"
+
 /*!
 * \brief Class definition of type I32vec8
 * Defined here as this is not yet supported in dvec.h
 */
-#ifdef USE_PRIVATE_DVEC
-#undef USE_PRIVATE_DVEC
-#endif
 
-#ifdef _WIN32
+#define GCC_COMPILER (defined(__GNUC__) && !defined(__clang__))
 
-#if (__INTEL_COMPILER < 1910)
-#define USE_PRIVATE_DVEC
-#endif
-
-#else
-
-#ifdef __ICC
-#if (__ICC < 1910)
-#define USE_PRIVATE_DVEC
-#endif
-#endif
-
-#endif
-
-
-#ifdef USE_PRIVATE_DVEC
+#if defined(__ICC) || defined(_WIN32) || defined(__llvm__) || defined(GCC_COMPILER)
+namespace COM{
 class I32vec8
 {
 public:
@@ -211,11 +196,13 @@ public:
       return *this;
     }
 
+#if !(defined(__GNUC__) && !defined(__clang__) && !defined(__ICC))
     I16vec16& operator /= (I16vec16 rhs)
     {
       simd = _mm256_div_epi16(simd, rhs.simd);
       return *this;
     }
+#endif
 
     short operator[](int index) const
     {
@@ -231,6 +218,7 @@ public:
 
     __m256i simd;
 };
+}
 #endif
 
 #endif /* _COMMON_TYPEDEF_SIMD_HPP_ */

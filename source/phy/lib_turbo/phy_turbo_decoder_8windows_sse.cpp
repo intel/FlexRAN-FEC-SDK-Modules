@@ -460,7 +460,6 @@ int32_t
 bblib_lte_turbo_decoder_8windows_sse(const struct bblib_turbo_decoder_request *request,
     struct bblib_turbo_decoder_response *response)
 {
-    int32_t retVal = -1;
     int32_t NumIter = 0;
     int32_t C = request->c;
     int32_t K = request->k;
@@ -481,7 +480,7 @@ bblib_lte_turbo_decoder_8windows_sse(const struct bblib_turbo_decoder_request *r
     int16_t *pAG = (int16_t *)response->ag_buf;
     uint8_t *out_bit = response->output;
 
-    int32_t i, j, kIdx, pos;
+    int32_t i, j, kIdx, pos, crc_status = 0;
     __align(64) int16_t TailAG[72];
     uint16_t interleaverTable[504];
     int16_t *pTailAG = (int16_t *)TailAG;
@@ -510,15 +509,14 @@ bblib_lte_turbo_decoder_8windows_sse(const struct bblib_turbo_decoder_request *r
     struct bblib_crc_request crc_request;
     crc_request.data = out_bit;
     crc_request.len = ((K >> 3) - 3)*8;
-    
+
     struct bblib_crc_response crc_response;
     crc_response.data = crc_request.data;
-    
 
     NumIter++;
     if (C>1)
     {
-        bblib_lte_crc24b_check_sse(&crc_request, &crc_response); 
+        bblib_lte_crc24b_check_sse(&crc_request, &crc_response);
     }
     else
     {
@@ -526,10 +524,11 @@ bblib_lte_turbo_decoder_8windows_sse(const struct bblib_turbo_decoder_request *r
     }
     if (crc_response.check_passed)
     {
-        if (request->early_term_disable)
-            retVal = NumIter;
-        else
+        if (request->early_term_disable == 0)
+        {
+            response->crc_status = 1;
             return NumIter;
+        }
     }
 
     /*Interleaver y */
@@ -564,10 +563,9 @@ bblib_lte_turbo_decoder_8windows_sse(const struct bblib_turbo_decoder_request *r
         struct bblib_crc_request crc_request;
         crc_request.data = out_bit;
         crc_request.len = ((K >> 3) - 3)*8;
-        
+
         struct bblib_crc_response crc_response;
         crc_response.data = crc_request.data;
-        
 
         NumIter++;
         if (C>1)
@@ -580,14 +578,21 @@ bblib_lte_turbo_decoder_8windows_sse(const struct bblib_turbo_decoder_request *r
         }
         if (crc_response.check_passed)
         {
-            if (request->early_term_disable)
-                retVal = NumIter;
-            else
+            crc_status = 1;
+            if (request->early_term_disable == 0)
+            {
+                response->crc_status = 1;
                 return NumIter;
+            }
         }
     }
 
-    return retVal;
+    if (crc_status)
+    {
+        response->crc_status = 1;
+    }
+
+    return NumIter;
 }
 #else
 int32_t

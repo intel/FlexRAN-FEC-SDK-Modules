@@ -35,6 +35,8 @@
 
 #include "phy_turbo.h"
 #include "phy_turbo_internal.h"
+#include "gcc_inc.h"
+
 #if defined(_BBLIB_SSE4_2_) || defined(_BBLIB_AVX2_) || defined(_BBLIB_AVX512_)
 
 __align(64) uint16_t g_OutputWinTable8_sdk[256][8];
@@ -96,11 +98,18 @@ bblib_lte_turbo_encoder_sse(const struct bblib_turbo_encoder_request *request,
     int32_t len128, lens, idx;
     int8_t bt0 = 0, bt1 = 0, bt2 = 0;
     int8_t b80, b81, yr80, yr81;
+    uint32_t requestLength = request->length;
+    // Add this line to fix klocwork SPECTRE.VARIANT1 warning
+    if (requestLength >= (MAX_DATA_LEN_INTERLEAVE*4))
+    {
+        printf("Request length for turbo encoder out of range!\n");
+        return -1;
+    }
 
     uint8_t State0, State1, Tail0, Tail1, Tmp1, Tmp2;
     uint16_t TmpShort1, TmpShort2;
 
-    len128 = request->length & 0xFFFFFFF0;
+    len128 = requestLength & 0xFFFFFFF0;
     b0 = _mm_setzero_si128();
     yr0 = _mm_setzero_si128();
     b1 = _mm_setzero_si128();
@@ -157,7 +166,7 @@ bblib_lte_turbo_encoder_sse(const struct bblib_turbo_encoder_request *request,
             yr1 = _mm_slli_epi64(yr1, 5);
         }
     }
-    lens = request->length - len128;
+    lens = requestLength - len128;
     if (unlikely_local(lens == 0))
     {
         /* tail processing */
@@ -184,9 +193,9 @@ bblib_lte_turbo_encoder_sse(const struct bblib_turbo_encoder_request *request,
         bt1 = bt1 | ((b81 & 0x20) >> 1);
         bt2 = bt2 | ((yr81 & 0x20) >> 1);
 
-        *(response->output_win_0 + request->length) = bt0;
-        *(response->output_win_1 + request->length) = bt1;
-        *(response->output_win_2 + request->length) = bt2;
+        *(response->output_win_0 + requestLength) = bt0;
+        *(response->output_win_1 + requestLength) = bt1;
+        *(response->output_win_2 + requestLength) = bt2;
 
         return 0;
     }
@@ -230,7 +239,7 @@ bblib_lte_turbo_encoder_sse(const struct bblib_turbo_encoder_request *request,
             State1 = _mm_extract_epi8(a1, 8) & 0x7;
 
             len128 += 64;
-            lens = request->length - len128;
+            lens = requestLength - len128;
 
             if (lens == 0)
             {
@@ -258,9 +267,9 @@ bblib_lte_turbo_encoder_sse(const struct bblib_turbo_encoder_request *request,
                 bt1 = bt1 | ((b81 & 0x20) >> 1);
                 bt2 = bt2 | ((yr81 & 0x20) >> 1);
 
-                *(response->output_win_0 + request->length) = bt0;
-                *(response->output_win_1 + request->length) = bt1;
-                *(response->output_win_2 + request->length) = bt2;
+                *(response->output_win_0 + requestLength) = bt0;
+                *(response->output_win_1 + requestLength) = bt1;
+                *(response->output_win_2 + requestLength) = bt2;
 
                 return 0;
             }
@@ -276,7 +285,7 @@ bblib_lte_turbo_encoder_sse(const struct bblib_turbo_encoder_request *request,
             State1 = _mm_extract_epi8(a1, 0) & 0x7;
         }
 
-        for(idx = len128; idx < request->length; idx++)
+        for(idx = len128; idx < requestLength; idx++)
         {
             Tmp1 = *(request->input_win + idx);
             Tmp2 = *(input_win_2 + idx);
@@ -296,13 +305,13 @@ bblib_lte_turbo_encoder_sse(const struct bblib_turbo_encoder_request *request,
         Tail1 = g_TailWinTable_sdk[State1];
         Tail1 = Tail1>>2;
 
-        *(response->output_win_0 + request->length) = (Tail0 & (128+64)) + (Tail1 & (32+16));
+        *(response->output_win_0 + requestLength) = (Tail0 & (128+64)) + (Tail1 & (32+16));
         Tail0 = Tail0 << 2;
         Tail1 = Tail1 << 2;
-        *(response->output_win_1 + request->length) = (Tail0 & (128+64)) + (Tail1 & (32+16));
+        *(response->output_win_1 + requestLength) = (Tail0 & (128+64)) + (Tail1 & (32+16));
         Tail0 = Tail0 << 2;
         Tail1 = Tail1 << 2;
-        *(response->output_win_2 + request->length) = (Tail0 & (128+64)) + (Tail1 & (32+16));
+        *(response->output_win_2 + requestLength) = (Tail0 & (128+64)) + (Tail1 & (32+16));
 
     }
 

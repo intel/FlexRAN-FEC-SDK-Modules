@@ -30,6 +30,14 @@
 # Set DIR_WIRELESS_SDK
 export DIR_WIRELESS_SDK="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+CODE_COVERAGE=0
+echo "$1"
+if [ "$1" == "--cov" ]
+then
+   CODE_COVERAGE=1
+   echo codecov="$CODE_COVERAGE"
+fi
+
 # Checks
 case "$GTEST_ROOT" in
 "")
@@ -66,13 +74,13 @@ case "$WIRELESS_SDK_TOOLCHAIN" in
     ;;
 *)
     echo "ERROR: Environment variable WIRELESS_SDK_TOOLCHAIN set to invalid value"
-    echo "       Valid settings: icc, gcc"
+    echo "       Valid settings: icc, gcc, icx"
     exit 1
     ;;
 esac
 
 case "$WIRELESS_SDK_TARGET_ISA" in
-"sse4_2" | "avx2" | "avx512" | "snc")
+"sse4_2" | "avx2" | "avx512" | "snc" | "spr")
     echo "INFO:  Environment variable WIRELESS_SDK_TARGET_ISA=$WIRELESS_SDK_TARGET_ISA"
     ;;
 "")
@@ -103,7 +111,7 @@ case "$WIRELESS_SDK_TARGET_ISA" in
 esac
 
 case "$WIRELESS_SDK_STANDARD" in
-"lte" | "5gnr" | "all")
+"lte" | "5gnr" | "all" | "common")
     echo "INFO:  Environment variable WIRELESS_SDK_STANDARD=$WIRELESS_SDK_STANDARD"
     ;;
 "")
@@ -151,6 +159,9 @@ then
 elif [ $WIRELESS_SDK_TARGET_ISA == "avx512" ]
 then
     ISA_SELECT="-DISA_AVX512=1"
+elif [ $WIRELESS_SDK_TARGET_ISA == "spr" ]
+then
+    ISA_SELECT="-DISA_SPR=1"
 elif [ $WIRELESS_SDK_TARGET_ISA == "snc" ]
 then
     ISA_SELECT="-DISA_SNC=1"
@@ -163,5 +174,5 @@ mkdir $DIR_WIRELESS_SDK_BUILD
 
 # Generate makefiles
 cd $DIR_WIRELESS_SDK_BUILD
-cmake -G "Unix Makefiles" $ISA_SELECT -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE .. || exit 1
+cmake -G "Unix Makefiles" $ISA_SELECT -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE -DCODE_COVERAGE=$CODE_COVERAGE .. || exit 1
 cd ..

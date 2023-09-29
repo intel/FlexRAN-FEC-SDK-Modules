@@ -88,7 +88,7 @@ std::vector<unsigned> get_sequence(const unsigned number)
     return sequence;
 }
 
-char* read_data_to_aligned_array(const std::string &filename)
+char* read_data_to_aligned_array(const std::string &filename, size_t &buffer_size)
 {
     std::ifstream input_stream(filename, std::ios::binary);
 
@@ -98,6 +98,7 @@ char* read_data_to_aligned_array(const std::string &filename)
     if(buffer.size() == 0)
         throw reading_input_file_exception();
 
+    buffer_size = buffer.size();
     auto aligned_buffer = aligned_malloc<char>((int) buffer.size(), 64);
 
     if(aligned_buffer == nullptr)

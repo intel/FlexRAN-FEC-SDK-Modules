@@ -87,6 +87,10 @@
 #define N_FFT_SIZE_MU0_10MHZ (1024)
 #endif
 
+#ifndef N_FFT_SIZE_MU0_15MHZ
+#define N_FFT_SIZE_MU0_15MHZ (1536)
+#endif
+
 #ifndef N_FFT_SIZE_MU0_20MHZ
 #define N_FFT_SIZE_MU0_20MHZ (2048)
 #endif
@@ -105,6 +109,10 @@
 
 #ifndef N_FFT_SIZE_MU1_40MHZ
 #define N_FFT_SIZE_MU1_40MHZ (2048)
+#endif
+
+#ifndef N_FFT_SIZE_MU1_50MHZ
+#define N_FFT_SIZE_MU1_50MHZ (2048)
 #endif
 
 #ifndef N_FFT_SIZE_MU1_60MHZ
@@ -127,6 +135,10 @@
 #define N_MAX_CP_MU0_10MHZ (80)
 #endif
 
+#ifndef N_MAX_CP_MU0_15MHZ
+#define N_MAX_CP_MU0_15MHZ (120)
+#endif
+
 #ifndef N_MAX_CP_MU0_20MHZ
 #define N_MAX_CP_MU0_20MHZ (160)
 #endif
@@ -145,6 +157,10 @@
 
 #ifndef N_MAX_CP_MU1_40MHZ
 #define N_MAX_CP_MU1_40MHZ (176)
+#endif
+
+#ifndef N_MAX_CP_MU1_50MHZ
+#define N_MAX_CP_MU1_50MHZ (176)
 #endif
 
 #ifndef N_MAX_CP_MU1_60MHZ
@@ -167,6 +183,10 @@
 #define N_MIN_CP_MU0_10MHZ (72)
 #endif
 
+#ifndef N_MIN_CP_MU0_15MHZ
+#define N_MIN_CP_MU0_15MHZ (108)
+#endif
+
 #ifndef N_MIN_CP_MU0_20MHZ
 #define N_MIN_CP_MU0_20MHZ (144)
 #endif
@@ -185,6 +205,10 @@
 
 #ifndef N_MIN_CP_MU1_40MHZ
 #define N_MIN_CP_MU1_40MHZ (144)
+#endif
+
+#ifndef N_MIN_CP_MU1_50MHZ
+#define N_MIN_CP_MU1_50MHZ (144)
 #endif
 
 #ifndef N_MIN_CP_MU1_60MHZ
@@ -227,6 +251,10 @@
 #define N_FULLBAND_SC_MU1_40MHZ (1272)
 #endif
 
+#ifndef N_FULLBAND_SC_MU1_50MHZ
+#define N_FULLBAND_SC_MU1_50MHZ (1596)
+#endif
+
 #ifndef N_FULLBAND_SC_MU1_60MHZ
 #define N_FULLBAND_SC_MU1_60MHZ (1944)
 #endif
@@ -247,6 +275,10 @@
 #define N_SAMPLE_RATE_MU0_20MHZ (30.72*1000*1000)
 #endif
 
+#ifndef N_SAMPLE_RATE_MU0_15MHZ
+#define N_SAMPLE_RATE_MU0_15MHZ (23.04*1000*1000)
+#endif
+
 #ifndef N_SAMPLE_RATE_MU0_10MHZ
 #define N_SAMPLE_RATE_MU0_10MHZ (15.36*1000*1000)
 #endif
@@ -265,6 +297,10 @@
 
 #ifndef N_SAMPLE_RATE_MU1_40MHZ
 #define N_SAMPLE_RATE_MU1_40MHZ (61.44*1000*1000)
+#endif
+
+#ifndef N_SAMPLE_RATE_MU1_50MHZ
+#define N_SAMPLE_RATE_MU1_50MHZ (61.44*1000*1000)
 #endif
 
 #ifndef N_SAMPLE_RATE_MU1_60MHZ
@@ -315,28 +351,9 @@
 #define DMRS_TYPE2_SINGLE_DMRS_MAX_PORT_NUM (6)
 #endif
 
-/*!
-    \enum bblib_common_const_wireless_params
-    \brief This enum contains the common wireless constants accross both LTE
-    and 5G used throughout the bblib libraries.
-*/
-enum bblib_common_const_wireless_params {
-    BBLIB_N_SC_PER_PRB = 12,    /*!< Number of subcarriers in a Physical Resource Block */
-    BBLIB_N_SYMB_PER_SF = 14 /*!< Number of symbols in sub-frame */
-};
-
-/*!
-    \enum mmse_mimo_constants
-    \brief Constants used in MMSE MIMO
-*/
-enum mmse_mimo_constants {
-        BBLIB_MAX_RX_ANT_NUM = 16, /*!< MAX number of Rx antennas */
-        BBLIB_MAX_TX_LAYER_NUM = 16,   /*!< MAX number of Tx layers */
-        BBLIB_RX_DATA_FIXED_POINT = 13,   /*!< Fixed point of Rx data */
-        BBLIB_MMSE_X_LEFT_SHIFT = BBLIB_RX_DATA_FIXED_POINT, /*!< MMSE X left shift */
-        BBLIB_MMSE_LEMMA_SCALING = ((BBLIB_RX_DATA_FIXED_POINT)*2), /*!< MMSE Lemma scaling */
-        BBLIB_MAX_MU = 4          /*!< MAX number of multiple user pair */
-};
+#ifndef DMRS_MAX_PORT_NUM_PER_CDM
+#define DMRS_MAX_PORT_NUM_PER_CDM (4)
+#endif
 
 #endif /* _BBLIB_COMMON_CONST_ */
 

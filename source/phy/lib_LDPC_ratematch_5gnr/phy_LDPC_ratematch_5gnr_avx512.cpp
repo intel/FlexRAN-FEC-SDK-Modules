@@ -34,12 +34,14 @@
 #include "phy_LDPC_ratematch_5gnr.h"
 #include "common_typedef_sdk.h"
 
+#ifdef _BBLIB_AVX512_
 constexpr auto MAX_LENGTH=16384;
 constexpr __mmask64 tailMask[] = {
 0x0, 0x3, 0xF, 0x3F, 0xFF, 0x3FF, 0xFFF, 0x3FFF,
 0xFFFF, 0x3FFFF, 0xFFFFF, 0x3FFFFF, 0xFFFFFF, 0x3FFFFFF, 0xFFFFFFF, 0x3FFFFFFF,
 0xFFFFFFFF, 0x3FFFFFFFF, 0xFFFFFFFFF, 0x3FFFFFFFFF, 0xFFFFFFFFFF, 0x3FFFFFFFFFF, 0xFFFFFFFFFFF, 0x3FFFFFFFFFFF,
 0xFFFFFFFFFFFF, 0x3FFFFFFFFFFFF, 0xFFFFFFFFFFFFF, 0x3FFFFFFFFFFFFF, 0xFFFFFFFFFFFFFF, 0x3FFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFF, 0x3FFFFFFFFFFFFFFF};
+#endif
 
 //! @{
 /*! \brief bit select function for 5GNR LDPC rate matching.
@@ -268,6 +270,7 @@ inline void bitSelect(const struct bblib_LDPC_ratematch_5gnr_request *request, u
     \param [out] response Structure containing output pointer.
     \param [in] e Temporary pointer to the output after bit slection, as input of bit interleave.
 */
+#ifdef _BBLIB_AVX512_
 inline void bitInterleave_avx512(const struct bblib_LDPC_ratematch_5gnr_request *request, struct bblib_LDPC_ratematch_5gnr_response *response, uint8_t *e)
 {
     int32_t Q = request->Qm;
@@ -1487,7 +1490,7 @@ inline void bitInterleave_avx512(const struct bblib_LDPC_ratematch_5gnr_request 
             break;
     }
 }
-
+#endif
 //-------------------------------------------------------------------------------------------
 /**
  *  @brief rate matching for LDPC in 5GNR.
@@ -1495,6 +1498,8 @@ inline void bitInterleave_avx512(const struct bblib_LDPC_ratematch_5gnr_request 
  *  @param [out] response Structure containing kernel outputs.
  *  @return Success: return 0, else: return -1.
 **/
+
+#ifdef _BBLIB_AVX512_
 int32_t bblib_LDPC_ratematch_5gnr_avx512(const struct bblib_LDPC_ratematch_5gnr_request *request, struct bblib_LDPC_ratematch_5gnr_response *response)
 {
     uint8_t e[MAX_LENGTH];
@@ -1505,3 +1510,4 @@ int32_t bblib_LDPC_ratematch_5gnr_avx512(const struct bblib_LDPC_ratematch_5gnr_
     bitInterleave_avx512(request, response, e);
     return 0;
 }
+#endif

@@ -94,12 +94,25 @@ else()
   # Linux
   #
   # Set CMAKE_BUILD_TYPE specific c++ compile flags (overrides CMake defaults)
+  
   set(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g -std=c++17")
   set(CMAKE_CXX_FLAGS_RELEASE  "-O3 -DNDEBUG -g -std=c++17")
   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO  "-O2 -g -DNDEBUG -std=c++17")
   set(CMAKE_CXX_FLAGS_MINSIZEREL  "-Os -DNDEBUG -std=c++17")
   set(CMAKE_CXX_FLAGS_VTUNE  "-O3 -g -std=c++17")
   set(CMAKE_CXX_FLAGS_DYNAMIC  "-O3 -DNDEBUG -std=c++17")
+
+
+  if (${CODE_COVERAGE} MATCHES "1")
+    set(CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-instr-generate -fcoverage-mapping")
+    set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -fprofile-instr-generate -fcoverage-mapping")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO  "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fprofile-instr-generate -fcoverage-mapping")
+    set(CMAKE_CXX_FLAGS_MINSIZEREL  "${CMAKE_CXX_FLAGS_MINSIZEREL} -fprofile-instr-generate -fcoverage-mapping")
+    set(CMAKE_CXX_FLAGS_VTUNE  "${CMAKE_CXX_FLAGS_VTUNE} -fprofile-instr-generate -fcoverage-mapping")
+    set(CMAKE_CXX_FLAGS_DYNAMIC  "${CMAKE_CXX_FLAGS_DYNAMIC} -fprofile-instr-generate -fcoverage-mapping")
+  endif()
+  
+  message(STATUS,"CXXFLAGS: ${CMAKE_CXX_FLAGS_DEBUG}")
 
   # Compile flags for all ISA and build types (do not get passed to linker)
 
@@ -130,6 +143,10 @@ else()
   elseif(${ISA_AVX2})
     # Compile flags / defintions for AVX2 (Linux)
    add_compile_options("-xCORE-AVX2")
+   #add_compile_options("-mavx512f")
+   #add_compile_options("-mavx512vl")
+   #add_compile_options("-mavx512bw")
+   #add_compile_options("-mavx512dq")
 
   elseif(${ISA_AVX512})
     # Compile flags / defintions for AVX512 (Linux)
@@ -137,12 +154,7 @@ else()
   elseif(${ISA_SPR})
     # Compile flags / defintions for sapphirerapids (Linux)
     message("icx: -march=sapphirerapids")
-    if(${SPR_SIM})
-      add_definitions("-DUSE_FP16_EMULATION")
-      add_compile_options("-xCORE-AVX512")
-    else()
-      add_compile_options("-march=sapphirerapids")
-    endif()
+    add_compile_options("-march=sapphirerapids")
     add_compile_options("-mllvm")
     add_compile_options("-x86-cfma-min=8")
   elseif(${ISA_SNC})
@@ -156,14 +168,5 @@ else()
 
   # linux linker flags for unittests executable
   set(CMAKE_EXE_LINKER_FLAGS "-lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -liomp5 -lpthread -lipps")
-  # add link options
-  # add_compile_options("-v")
-  # add_link_options("-ipo")
-
-  # SET (CMAKE_AR      "llvm-ar")
   SET (CMAKE_RANLIB  "llvm-ranlib")
-
-  # SET (CMAKE_LINKER  "llvm-ld")
-  # SET (CMAKE_NM      "llvm-nm")
-  # SET (CMAKE_OBJDUMP "llvm-objdump")
 endif()

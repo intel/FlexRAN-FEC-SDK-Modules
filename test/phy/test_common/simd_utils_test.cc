@@ -22,39 +22,45 @@
 *
 **********************************************************************/
 
-#include "simd_utils.hpp"
-
 #include "common.hpp"
+
+#include "simd_utils.hpp"
 
 bool Equals(__m256 lhs, __m256 rhs) {
     const auto isEq = _mm256_cmp_ps(lhs, rhs, _CMP_EQ_OQ);
     return _mm256_movemask_ps(isEq) == 0xFF;
 }
 
+#ifdef _BBLIB_AVX512_
 bool Equals(__m512 lhs, __m512 rhs) {
     const auto isEq = _mm512_cmpeq_ps_mask (lhs, rhs);
     return isEq == 0xFFFF;
 }
+#endif
 
 bool Equals_epi16(__m256i lhs, __m256i rhs) {
     const auto isEq = _mm256_cmpeq_epi16(lhs, rhs);
     return _mm256_movemask_epi8(isEq) == 0xFFFFFFFFFFFFFFFF;
 }
 
+#ifdef _BBLIB_AVX512_
 bool Equals_epi16(__m512i lhs, __m512i rhs) {
     const auto isEq = _mm512_cmpeq_epi16_mask(lhs, rhs);
     return isEq == 0xFFFFFFFF;
 }
+#endif
 
 bool Equals_epi32(__m256i lhs, __m256i rhs) {
     const auto isEq = _mm256_cmpeq_epi32(lhs, rhs);
     return _mm256_movemask_epi8(isEq) == 0xFFFFFFFFFFFFFFFF;
 }
 
+#ifdef _BBLIB_AVX512_
 bool Equals_epi32(__m512i lhs, __m512i rhs) {
     const auto isEq = _mm512_cmpeq_epi32_mask(lhs, rhs);
     return isEq == 0xFFFF;
 }
+#endif
 
 #ifdef _BBLIB_AVX2_
 TEST(SimdUtilsCheck, CopyInvertedSignAvx2)
@@ -132,7 +138,7 @@ TEST(SimdUtilsCheck, Unpack8Avx2)
 
 TEST(SimdUtilsCheck, StoreMaskFxpAvx2)
 {
-    constexpr int values_per_vec = sizeof(I16vec16) / sizeof(int16_t);
+    constexpr int values_per_vec = sizeof(COM::I16vec16) / sizeof(int16_t);
 
     auto input = _mm256_setr_epi16(0, 1, 2, 3, 4, 5, 6, 7,
                                    8, 9, 10, 11, 12, 13, 14, 15);
@@ -143,7 +149,7 @@ TEST(SimdUtilsCheck, StoreMaskFxpAvx2)
     __mmask32 mask = 0xFFFF;
     int16_t reference[values_per_vec] {0, 1, 2, 3, 4, 5, 6, 7,
                            8, 9, 10, 11, 12, 13, 14, 15};
-    store_mask((I16vec16*)output, mask, input);
+    store_mask((COM::I16vec16*)output, mask, (COM::I16vec16)input);
     ASSERT_ARRAY_EQ(reference, output, values_per_vec);
 
     // mask 0101 0101 0101 0101
@@ -151,14 +157,14 @@ TEST(SimdUtilsCheck, StoreMaskFxpAvx2)
     int16_t reference2[values_per_vec] {0, 0, 2, 0, 4, 0, 6, 0,
                             8, 0, 10, 0, 12, 0, 14, 0};
     std::memset(output, 0, sizeof(output));
-    store_mask((I16vec16*)output, mask, input);
+    store_mask((COM::I16vec16*)output, mask, (COM::I16vec16)input);
     ASSERT_ARRAY_EQ(reference2, output, values_per_vec);
 
     // mask 0000 0000 0000 0010
     mask = 0x2;
     int16_t reference3[values_per_vec] {0, 1};
     std::memset(output, 0, sizeof(output));
-    store_mask((I16vec16*)output, mask, input);
+    store_mask((COM::I16vec16*)output, mask, (COM::I16vec16)input);
     ASSERT_ARRAY_EQ(reference3, output, values_per_vec);
 }
 
