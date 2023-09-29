@@ -1,0 +1,11 @@
+prefix=@DEST_DIR@
+exec_prefix=${prefix}
+libdir=${prefix}
+includedir=${prefix}
+
+Name: @SDK_LIB@
+Description: @SDK_DESC@
+Version: @SDK_VER@
+
+Cflags: -I${includedir}
+Libs: -L${libdir} -l@SDK_LINK@
