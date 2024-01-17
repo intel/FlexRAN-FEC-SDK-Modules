@@ -29,10 +29,6 @@ set(COMMON_KERNELS
   common
   crc
   turbo
-  ldpc_encoder_5gnr
-  ldpc_decoder_5gnr
-  rate_dematching_5gnr
-  LDPC_ratematch_5gnr
   rate_matching
 )
 # LTE kernels (lte || all)
@@ -40,6 +36,10 @@ set(LTE_KERNELS
 )
 # 5GNR kernels (5gnr || all)
 set(5GNR_KERNELS
+  ldpc_encoder_5gnr
+  ldpc_decoder_5gnr
+  rate_dematching_5gnr
+  LDPC_ratematch_5gnr
 )
 # Other kernels (all)
 set(OTHER_KERNELS
