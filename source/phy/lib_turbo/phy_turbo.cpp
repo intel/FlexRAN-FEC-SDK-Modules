@@ -70,28 +70,29 @@ struct bblib_lte_turbo_init
         }
 
         path_len = strlen(pTablePath);
+        // Remove in reference of https://github.com/intel/FlexRAN-FEC-SDK-Modules/issues/4
         //check to see if string has necessary characters
-#ifdef WIN32
-        pCheckPath1 = strstr(pTablePath, "sdk");
-
-        if ((pCheckPath1 == NULL) && (pCheckPath2 == NULL))
-        {
-            printf("%s is not valid!!!  DIR_WIRELESS_SDK must include\n", pTablePath);
-            printf("sdk somewhere in path\n");
-            exit(1);
-        }
-#else
-        pCheckPath1 = strstr(pTablePath, "sdk/build-avx");
-        pCheckPath2 = strstr(pTablePath, "sdk/build-snc");
-        pCheckPath3 = strstr(pTablePath, "sdk/build-spr");
-
-        if ((pCheckPath1 == NULL) && (pCheckPath2 == NULL) && (pCheckPath3 == NULL))
-        {
-            printf("%s is not valid!!!  DIR_WIRELESS_SDK must include\n", pTablePath);
-            printf("sdk/build-avx or sdk/build-snc or sdk/build-spr somewhere in path\n");
-            exit(-1);
-        }
-#endif
+        //#ifdef WIN32
+        //        pCheckPath1 = strstr(pTablePath, "sdk");
+        //
+        //        if ((pCheckPath1 == NULL) && (pCheckPath2 == NULL))
+        //        {
+        //            printf("%s is not valid!!!  DIR_WIRELESS_SDK must include\n", pTablePath);
+        //            printf("sdk somewhere in path\n");
+        //            exit(1);
+        //        }
+        //#else
+        //        pCheckPath1 = strstr(pTablePath, "sdk/build-avx");
+        //        pCheckPath2 = strstr(pTablePath, "sdk/build-snc");
+        //        pCheckPath3 = strstr(pTablePath, "sdk/build-spr");
+        //
+        //        if ((pCheckPath1 == NULL) && (pCheckPath2 == NULL) && (pCheckPath3 == NULL))
+        //        {
+        //            printf("%s is not valid!!!  DIR_WIRELESS_SDK must include\n", pTablePath);
+        //            printf("sdk/build-avx or sdk/build-snc or sdk/build-spr somewhere in path\n");
+        //            exit(-1);
+        //        }
+        //#endif
 
         //check to see if string has characters trying to access
         //files in other directories
